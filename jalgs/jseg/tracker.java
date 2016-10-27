@@ -96,13 +96,8 @@ public class tracker{
 		float[][] dist=new float[noldobj][nnewobj];
 		int[] indices=new int[noldobj];
 		int counter=0;
-<<<<<<< HEAD
 		//distList added by Chris Wood 10-24-2016
         ArrayList<List<Integer>> distList = new ArrayList<>();
-=======
-                //distList added by Chris Wood 10-24-2016
-                ArrayList<List<Integer>> distList = new ArrayList<>();
->>>>>>> a610e3fe1ef8d1f812eb58d92bdd087c41ea876f
 		for(int i=0;i<trajlist.size();i++){
 			if(!closed[i]){
 				indices[counter]=i;
@@ -112,21 +107,12 @@ public class tracker{
 					dist[counter][j]=distance(tp,params.get(j),twoD);
 					if(dist[counter][j]>linkrange)
 						dist[counter][j]=-1.0f;
-<<<<<<< HEAD
 					else {
 						List<Integer> cj = new ArrayList<>();
                         cj.add(counter);
                         cj.add(j);
                         distList.add(cj);
 					}
-=======
-                                        else {
-                                                List<Integer> cj = new ArrayList<>();
-                                                cj.add(counter);
-                                                cj.add(j);
-                                                distList.add(cj);
-                                        }
->>>>>>> a610e3fe1ef8d1f812eb58d92bdd087c41ea876f
 				}
 				counter++;
 			}
@@ -140,10 +126,6 @@ public class tracker{
 		// now repeatedly find the global minimum distance, making pairs unavailable as we find them
 		// once we can't find any distances below the linkrange we cut our losses and move on
 		for(int i=0;i<noldobj;i++){
-<<<<<<< HEAD
-=======
-
->>>>>>> a610e3fe1ef8d1f812eb58d92bdd087c41ea876f
 			int[] pair=find_global_min(dist, distList, oldavail,newavail);
 			if(pair==null)
 				break;
@@ -190,7 +172,6 @@ public class tracker{
 		}
 	}
 
-<<<<<<< HEAD
 	private int[] find_global_min(float[][] dist, ArrayList<List<Integer>> distList,boolean[] oldavail,boolean[] newavail){
         float min=-1.0f;
         int oldmin=0;
@@ -229,46 +210,4 @@ public class tracker{
         	return null;
         }
     }
-=======
-	private int[] find_global_min(float[][] dist, ArrayList<List<Integer>> distList,
-                                    boolean[] oldavail,boolean[] newavail){
-
-		float min=-1.0f;
-		int oldmin=0;
-		int newmin=0;
-		boolean first=true;
-		//for(int i=0;i<dist.length;i++){
-                //iterate over the distList rather than the whole dist array
-                for (List<Integer> xij : distList) {
-                        int i = xij.get(0);
-                        int j = xij.get(1);
-			if(oldavail[i]){
-//				for(int j=0;j<dist[i].length;j++){
-				if(newavail[j]&&dist[i][j]>=0.0f){
-					if(first){
-						min=dist[i][j];
-						oldmin=i;
-						newmin=j;
-						first=false;
-					}else {
-						if(dist[i][j]<min){
-							min=dist[i][j];
-							oldmin=i;
-							newmin=j;
-						}
-					}
-				//}
-				}
-			}
-		}
-		if(min>=0.0f){
-			oldavail[oldmin]=false;
-			newavail[newmin]=false;
-			int[] temp={oldmin,newmin};
-			return temp;
-		}else{
-			return null;
-		}
-	}
->>>>>>> a610e3fe1ef8d1f812eb58d92bdd087c41ea876f
 }
