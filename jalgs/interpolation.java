@@ -52,19 +52,47 @@ public class interpolation{
 	 * @param yoff
 	 */
 	public static void shift_copy_image(Object src,int srcwidth,int srcheight,float[] dest,int destwidth,int destheight,float xoff,float yoff){
-		for(int i=0;i<destheight;i++){
-			float newy=(float)i-yoff;
-			if(newy>=0.0f && newy<(float)(srcheight-1)){
-    			for(int j=0;j<destwidth;j++){
-    				float newx=(float)j-xoff;
-    				if(newx>=0.0f && newx<(float)(srcwidth-1)){
-    					dest[j+i*destwidth]=interp2D(src,srcwidth,srcheight,newx,newy);
-    				}
+		int ixoff=(int)xoff;
+		int iyoff=(int)yoff;
+		if(xoff==(float)ixoff && yoff==(float)iyoff){
+			int type=algutils.get_array_type(src);
+			for(int i=0;i<destheight;i++){
+    			int newy=i-(int)yoff;
+    			if(newy>=0 && newy<srcheight){
+        			for(int j=0;j<destwidth;j++){
+        				int newx=j-(int)xoff;
+        				if(newx>=0 && newx<srcwidth){
+        					dest[j+i*destwidth]=algutils.getArrVal(src,newx+srcwidth*newy,type);
+        				}
+        			}
     			}
-			}
+    		}
+		} else {
+    		for(int i=0;i<destheight;i++){
+    			float newy=(float)i-yoff;
+    			if(newy>=0.0f && newy<=(float)(srcheight-1)){
+        			for(int j=0;j<destwidth;j++){
+        				float newx=(float)j-xoff;
+        				if(newx>=0.0f && newx<=(float)(srcwidth-1)){
+        					dest[j+i*destwidth]=interp2D(src,srcwidth,srcheight,newx,newy);
+        				}
+        			}
+    			}
+    		}
 		}
 	}
 	
+	/*******************
+	 * here the destination can be several array types
+	 * @param src
+	 * @param srcwidth
+	 * @param srcheight
+	 * @param dest1
+	 * @param destwidth
+	 * @param destheight
+	 * @param xoff
+	 * @param yoff
+	 */
 	public static void shift_copy_image(Object src,int srcwidth,int srcheight,Object dest1,int destwidth,int destheight,float xoff,float yoff){
 		if(src instanceof int[]){
 			//this is a color image
@@ -77,17 +105,7 @@ public class interpolation{
 			algutils.copy_subarray(temp2,0,dest1,0,destwidth*destheight);
 		} else {
     		float[] dest=new float[destwidth*destheight];
-    		for(int i=0;i<destheight;i++){
-    			float newy=(float)i-yoff;
-    			if(newy>=0.0f && newy<(float)(srcheight-1)){
-        			for(int j=0;j<destwidth;j++){
-        				float newx=(float)j-xoff;
-        				if(newx>=0.0f && newx<(float)(srcwidth-1)){
-        					dest[j+i*destwidth]=interp2D(src,srcwidth,srcheight,newx,newy);
-        				}
-        			}
-    			}
-    		}
+    		shift_copy_image(src,srcwidth,srcheight,dest,destwidth,destheight,xoff,yoff);
     		int type=algutils.get_array_type(src);
     		Object temp=algutils.convert_array(dest,type);
     		algutils.copy_subarray(temp,0,dest1,0,destwidth*destheight);
@@ -414,39 +432,43 @@ public class interpolation{
 	}
 
 	public static float interp2D(Object image,int width,int height,float x,float y){
-		if(x<=0.0f){
-			return 0.0f;
-		}
-		if(x>=(width-1)){
-			return 0.0f;
-		}
-		if(y<=0.0f){
-			return 0.0f;
-		}
-		if(y>=(height-1)){
-			return 0.0f;
-		}
+		if(x<0.0f) return 0.0f;
+		if(x>(float)(width-1)) return 0.0f;
+		if(y<0.0f) return 0.0f;
+		if(y>(float)(height-1)) return 0.0f;
 		int intx=(int)x;
 		int inty=(int)y;
 		float remx=x-intx;
 		float remy=y-inty;
 		float ul,ur,ll,lr;
 		if(image instanceof short[]){
-			ul=((short[])image)[intx+width*inty]&0xffff;
-			ur=((short[])image)[intx+width*inty+1]&0xffff;
-			ll=((short[])image)[intx+width*(inty+1)]&0xffff;
-			lr=((short[])image)[intx+width*(inty+1)+1]&0xffff;
+			short[] temp=(short[])image;
+			ul=temp[intx+width*inty]&0xffff;
+			if(intx<(width-1)) ur=temp[intx+1+width*inty]&0xffff;
+			else ur=ul;
+			if(inty<(height-1)) ll=temp[intx+width*(inty+1)]&0xffff;
+			else ll=ul;
+			if(intx==(width-1) && inty==(height-1)) lr=ul;
+			else lr=temp[intx+1+width*(inty+1)]&0xffff;
 		}else{
 			if(image instanceof byte[]){
-				ul=((byte[])image)[intx+width*inty]&0xff;
-				ur=((byte[])image)[intx+width*inty+1]&0xff;
-				ll=((byte[])image)[intx+width*(inty+1)]&0xff;
-				lr=((byte[])image)[intx+width*(inty+1)+1]&0xff;
+				byte[] temp=(byte[])image;
+				ul=temp[intx+width*inty]&0xff;
+				if(intx<(width-1)) ur=temp[intx+1+width*inty]&0xff;
+				else ur=ul;
+				if(inty<(height-1)) ll=temp[intx+width*(inty+1)]&0xff;
+				else ll=ul;
+				if(intx==(width-1) && inty==(height-1)) lr=ul;
+				else lr=temp[intx+1+width*(inty+1)]&0xff;
 			}else{
-				ul=((float[])image)[intx+width*inty];
-				ur=((float[])image)[intx+width*inty+1];
-				ll=((float[])image)[intx+width*(inty+1)];
-				lr=((float[])image)[intx+width*(inty+1)+1];
+				float[] temp=(float[])image;
+				ul=temp[intx+width*inty];
+				if(intx<(width-1)) ur=temp[intx+1+width*inty];
+				else ur=ul;
+				if(inty<(height-1)) ll=temp[intx+width*(inty+1)];
+				else ll=ul;
+				if(intx==(width-1) && inty==(height-1)) lr=ul;
+				else lr=temp[intx+1+width*(inty+1)];
 			}
 		}
 		float interpx1=ul+remx*(ur-ul);

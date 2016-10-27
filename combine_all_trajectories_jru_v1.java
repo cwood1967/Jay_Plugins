@@ -38,15 +38,16 @@ public class combine_all_trajectories_jru_v1 implements PlugIn {
 			for(int i=0;i<wList.length;i++){
 				ImagePlus imp = WindowManager.getImage(wList[i]);
 				ImageWindow iw=imp.getWindow();
-				if(iw.getClass().getName().equals("jguis.PlotWindow4") || iw.getClass().getName().equals("ij.gui.PlotWindow")){windows[nplots]=iw; nplots++;}
+				if(iw.getClass().getName().equals("jguis.PlotWindow4") || iw.getClass().getName().equals("ij.gui.PlotWindow") || iw.getClass().getName().equals("jguis.PlotWindowHist")){windows[nplots]=iw; nplots++;}
 			}
 		}
 		if(combineall){
 			PlotWindow4 pw=jutils.getPW4Copy(windows[0]);
 			for(int j=1;j<nplots;j++){
-				float[][] xvals2=(float[][])jutils.runPW4VoidMethod(windows[j],"getXValues");
-				float[][] yvals2=(float[][])jutils.runPW4VoidMethod(windows[j],"getYValues");
-				int[] npts=(int[])jutils.runPW4VoidMethod(windows[j],"getNpts");
+				Object[] pdata=getPlotValues(windows[j]); 
+				float[][] xvals2=(float[][])pdata[0]; 
+				float[][] yvals2=(float[][])pdata[1];
+				int[] npts=(int[])pdata[2];
 				boolean showerrs=(Boolean)jutils.runPW4VoidMethod(windows[j],"getShowErrors");
 				float[][][] errs=null;
 				if(showerrs) errs=(float[][][])jutils.runPW4VoidMethod(windows[j],"getErrors");
@@ -64,9 +65,10 @@ public class combine_all_trajectories_jru_v1 implements PlugIn {
 		} else {
 			PlotWindow4 pw=jutils.getPW4SelCopy(windows[0],combseries);
 			for(int j=1;j<nplots;j++){
-				float[][] xvals2=(float[][])jutils.runPW4VoidMethod(windows[j],"getXValues");
-				float[][] yvals2=(float[][])jutils.runPW4VoidMethod(windows[j],"getYValues");
-				int[] npts=(int[])jutils.runPW4VoidMethod(windows[j],"getNpts");
+				Object[] pdata=getPlotValues(windows[j]); 
+				float[][] xvals2=(float[][])pdata[0]; 
+				float[][] yvals2=(float[][])pdata[1];
+				int[] npts=(int[])pdata[2];
 				float[] newxvals=new float[npts[combseries]];
 				System.arraycopy(xvals2[combseries],0,newxvals,0,npts[combseries]);
 				float[] newyvals=new float[npts[combseries]];
@@ -83,6 +85,20 @@ public class combine_all_trajectories_jru_v1 implements PlugIn {
 			for(int i=0;i<nplots;i++){
 				windows[i].close();
 			}
+		}
+	}
+
+	public Object[] getPlotValues(ImageWindow iw){
+		if(iw.getClass().getName().equals("jguis.PlotWindowHist")){
+			Object plot=jutils.runReflectionMethod(iw,"getPlot",null,null);
+			float[][] hist=(float[][])jutils.runReflectionMethod(plot,"getHistogram",null,null);
+			int[] npts={hist[0].length};
+			return new Object[]{new float[][]{hist[0]},new float[][]{hist[1]},npts};
+		} else {
+			float[][] xvals2=(float[][])jutils.runPW4VoidMethod(iw,"getXValues");
+			float[][] yvals2=(float[][])jutils.runPW4VoidMethod(iw,"getYValues");
+			int[] npts=(int[])jutils.runPW4VoidMethod(iw,"getNpts");
+			return new Object[]{xvals2,yvals2,npts};
 		}
 	}
 }

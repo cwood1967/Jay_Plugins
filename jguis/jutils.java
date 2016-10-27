@@ -257,7 +257,11 @@ public class jutils{
 				pw2.draw();
 				return pw2;
 			}else{
-				return null;
+				if(iw.getClass().getName().equals("jguis.PlotWindowHist")){
+					return getPW4SelCopy(iw,0);
+				} else {
+					return null;
+				}
 			}
 		}
 	}

@@ -577,6 +577,10 @@ public class PlotWindowHist extends ImageWindow implements ActionListener,Clipbo
 		String[] temp={imp.getTitle(),p3.getxLabel(),p3.getyLabel()};
 		return temp;
 	}
+	
+	public boolean getShowErrors(){
+		return false;
+	}
 
 	public String getPlotTitle(){
 		return imp.getTitle();

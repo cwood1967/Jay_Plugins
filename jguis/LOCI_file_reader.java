@@ -114,11 +114,15 @@ public class LOCI_file_reader{
 
 			if(outmeta&&!nometa){
 				Hashtable<String,Object> globalMeta=r.getGlobalMetadata();
-				if(globalMeta!=null)
+				if(globalMeta!=null){
+					IJ.log("Global Metadata");
 					dumpMetaData(globalMeta);
+				}
 				Hashtable<String,Object> seriesMeta=r.getSeriesMetadata();
-				if(seriesMeta!=null)
+				if(seriesMeta!=null){
+					IJ.log("Series Metadata");
 					dumpMetaData(seriesMeta);
+				}
 			}
 			String name=""+fname;
 			if(nseries>1&&!nometa)
@@ -238,11 +242,15 @@ public class LOCI_file_reader{
 
 			if(outmeta&&!nometa){
 				Hashtable<String,Object> globalMeta=r.getGlobalMetadata();
-				if(globalMeta!=null)
+				if(globalMeta!=null){
+					IJ.log("Global Metadata");
 					dumpMetaData(globalMeta);
+				}
 				Hashtable<String,Object> seriesMeta=r.getSeriesMetadata();
-				if(seriesMeta!=null)
+				if(seriesMeta!=null){
+					IJ.log("Series Metadata");
 					dumpMetaData(seriesMeta);
+				}
 			}
 			String name=""+fname;
 			if(nseries>1&&!nometa)
@@ -524,25 +532,8 @@ public class LOCI_file_reader{
 	}
 	
 	public String[] batch_get_series_metadata_value(String directory,String fname,String key){
-		IMetadata omexmlMetadata=MetadataTools.createOMEXMLMetadata();
-		ImageProcessorReader r=new ImageProcessorReader(new ChannelSeparator(LociPrefs.makeImageReader()));
-		try{
-			r.setMetadataStore(omexmlMetadata);
-			r.setId(directory+fname);
-			nseries=r.getSeriesCount();
-			String[] vals=new String[nseries];
-			for(int i=0;i<nseries;i++){
-				r.setSeries(i);
-				Hashtable<String,Object> seriesMeta=r.getSeriesMetadata();
-				vals[i]=seriesMeta.get(key).toString();
-			}
-			r.close();
-			return vals;
-		}catch(FormatException e){
-			return null;
-		}catch(IOException e){
-			return null;
-		}
+		String[] keys={key};
+		return batch_get_series_metadata_value(directory,fname,keys)[0];
 		//return null;
 	}
 	
@@ -554,10 +545,15 @@ public class LOCI_file_reader{
 			r.setId(directory+fname);
 			nseries=r.getSeriesCount();
 			String[][] vals=new String[key.length][nseries];
+			Hashtable<String,Object> globalMeta=r.getGlobalMetadata();
 			for(int i=0;i<nseries;i++){
 				r.setSeries(i);
 				Hashtable<String,Object> seriesMeta=r.getSeriesMetadata();
-				for(int j=0;j<key.length;j++) vals[j][i]=seriesMeta.get(key[j]).toString();
+				for(int j=0;j<key.length;j++){
+					Object temp=seriesMeta.get(key[j]);
+					if(temp==null) globalMeta.get(key[j]);
+					if(temp!=null) vals[j][i]=temp.toString();
+				}
 			}
 			r.close();
 			return vals;

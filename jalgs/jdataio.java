@@ -573,6 +573,15 @@ public class jdataio{
 		return true;
 	}
 	
+	public boolean readmotorolashortfile(InputStream instream,int length,short[] data){
+		for(int i=0;i<length;i++){
+			int temp=readmotorolashort(instream);
+			if(temp==-1) return false;
+			data[i]=(short)temp;
+		}
+		return true;
+	}
+	
 	public boolean readmotorolaintfile(InputStream instream,int length,float[] data){
 		for(int i=0;i<length;i++){
 			int temp=readmotorolaint(instream);
