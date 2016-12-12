@@ -235,8 +235,8 @@ public class stitching{
 				float absyshift=Math.abs(yshift);
 				float relabsxshift=absxshift/(float)width;
 				float relabsyshift=absyshift/(float)height;
-				int rndxshift=0; if(relabsxshift>0.5f && relabsxshift<1.0f) rndxshift=1;
-				int rndyshift=0; if(relabsyshift>0.5f && relabsyshift<1.0f) rndyshift=1;
+				int rndxshift=0; if(relabsxshift>0.5f && relabsxshift<1.0f) rndxshift=1; if(relabsxshift>=1.0f) rndxshift=2;
+				int rndyshift=0; if(relabsyshift>0.5f && relabsyshift<1.0f) rndyshift=1; if(relabsyshift>=1.0f) rndyshift=2;
 				if(rndxshift==1 || rndyshift==1){
 					//we have a neighbor, now where is it?
     				if(rndxshift==1 && rndyshift==0){

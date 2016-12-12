@@ -448,8 +448,10 @@ public class interpolation{
 			else ur=ul;
 			if(inty<(height-1)) ll=temp[intx+width*(inty+1)]&0xffff;
 			else ll=ul;
-			if(intx==(width-1) && inty==(height-1)) lr=ul;
-			else lr=temp[intx+1+width*(inty+1)]&0xffff;
+			if(intx<(width-1) && inty<(height-1)) lr=temp[intx+1+width*(inty+1)]&0xffff;
+			else if(intx>=(width-1) && inty>=(height-1)) lr=ul;
+			else if(intx>=(width-1)) lr=ll;
+			else lr=ur;
 		}else{
 			if(image instanceof byte[]){
 				byte[] temp=(byte[])image;
@@ -458,8 +460,10 @@ public class interpolation{
 				else ur=ul;
 				if(inty<(height-1)) ll=temp[intx+width*(inty+1)]&0xff;
 				else ll=ul;
-				if(intx==(width-1) && inty==(height-1)) lr=ul;
-				else lr=temp[intx+1+width*(inty+1)]&0xff;
+				if(intx<(width-1) && inty<(height-1)) lr=temp[intx+1+width*(inty+1)]&0xff;
+				else if(intx>=(width-1) && inty>=(height-1)) lr=ul;
+				else if(intx>=(width-1)) lr=ll;
+				else lr=ur;
 			}else{
 				float[] temp=(float[])image;
 				ul=temp[intx+width*inty];
@@ -467,8 +471,10 @@ public class interpolation{
 				else ur=ul;
 				if(inty<(height-1)) ll=temp[intx+width*(inty+1)];
 				else ll=ul;
-				if(intx==(width-1) && inty==(height-1)) lr=ul;
-				else lr=temp[intx+1+width*(inty+1)];
+				if(intx<(width-1) && inty<(height-1)) lr=temp[intx+1+width*(inty+1)];
+				else if(intx>=(width-1) && inty>=(height-1)) lr=ul;
+				else if(intx>=(width-1)) lr=ll;
+				else lr=ur;
 			}
 		}
 		float interpx1=ul+remx*(ur-ul);

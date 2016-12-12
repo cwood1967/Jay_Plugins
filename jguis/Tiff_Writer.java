@@ -231,7 +231,7 @@ public class Tiff_Writer{
 		nSliceLabels=0;
 		int size=0;
 		int nTypes=0;
-		if(imp.isComposite()){
+		if(displayRanges!=null){
 			nMetaDataEntries++;
 			size+=displayRanges.length*8;
 			nTypes++;
