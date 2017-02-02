@@ -1330,10 +1330,10 @@ public class findblobs3 implements Runnable{
 	 * @param stat: the measurement statistic
 	 * @return
 	 */
-	public float[] get_all_object_stats(float[] objects,Object measurement,int[] lims,String stat){
+	public float[] get_all_object_stats(float[] objects,Object measurement,int[][] lims,String stat){
 		float[] allstats=new float[nobjects];
 		for(int i=0;i<nobjects;i++)
-			allstats[i]=get_object_stats(objects,i+1,measurement,lims,stat);
+			allstats[i]=get_object_stats(objects,i+1,measurement,lims[i],stat);
 		return allstats;
 	}
 

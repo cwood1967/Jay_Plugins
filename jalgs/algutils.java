@@ -1310,6 +1310,97 @@ public class algutils{
 		}
 		return output;
 	}
+	
+	public static float[] get_circle(Object image,int xc,int yc,int size,int width,int height){
+		if(image instanceof float[]) return get_circle((float[])image,xc,yc,size,width,height);
+		else if(image instanceof short[]) return get_circle((short[])image,xc,yc,size,width,height);
+		else return get_circle((short[])image,xc,yc,size,width,height);
+	}
+	
+	public static float get_circle_stat(String stat,Object image,int xc,int yc,int size,int width,int height){
+		return jstatistics.getstatistic(stat,get_circle(image,xc,yc,size,width,height),null);
+	}
+	
+	public static float[] get_circle(float[] image,int xc,int yc,int size,int width,int height){
+		if(!inbounds(xc,yc,width,height)) return null;
+		int startx=xc-size/2;
+		int starty=yc-size/2;
+		int endx=startx+size;
+		int endy=starty+size;
+		if(startx<0) startx=0;
+		if(starty<0) starty=0;
+		if(endx>(width-1)) endx=width-1;
+		if(endy>(height-1)) endy=height-1;
+		int xpix=endx-startx+1;
+		int ypix=endy-starty+1;
+		float[] output=new float[xpix*ypix];
+		int counter=0;
+		float rad=0.5f*(float)size;
+		float rad2=rad*rad;
+		for(int i=starty;i<=endy;i++){
+			for(int j=startx;j<=endx;j++){
+				if(((j-xc)*(j-xc)+(i-yc)*(i-yc))<=rad2){
+					output[counter]=image[j+i*width];
+					counter++;
+				}
+			}
+		}
+		return (float[])get_subarray(output,0,counter);
+	}
+	
+	public static float[] get_circle(short[] image,int xc,int yc,int size,int width,int height){
+		if(!inbounds(xc,yc,width,height)) return null;
+		int startx=xc-size/2;
+		int starty=yc-size/2;
+		int endx=startx+size;
+		int endy=starty+size;
+		if(startx<0) startx=0;
+		if(starty<0) starty=0;
+		if(endx>(width-1)) endx=width-1;
+		if(endy>(height-1)) endy=height-1;
+		int xpix=endx-startx+1;
+		int ypix=endy-starty+1;
+		float[] output=new float[xpix*ypix];
+		int counter=0;
+		float rad=0.5f*(float)size;
+		float rad2=rad*rad;
+		for(int i=starty;i<=endy;i++){
+			for(int j=startx;j<=endx;j++){
+				if(((j-xc)*(j-xc)+(i-yc)*(i-yc))<=rad2){
+					output[counter]=(float)(image[j+i*width]&0xffff);
+					counter++;
+				}
+			}
+		}
+		return (float[])get_subarray(output,0,counter);
+	}
+	
+	public static float[] get_circle(byte[] image,int xc,int yc,int size,int width,int height){
+		if(!inbounds(xc,yc,width,height)) return null;
+		int startx=xc-size/2;
+		int starty=yc-size/2;
+		int endx=startx+size;
+		int endy=starty+size;
+		if(startx<0) startx=0;
+		if(starty<0) starty=0;
+		if(endx>(width-1)) endx=width-1;
+		if(endy>(height-1)) endy=height-1;
+		int xpix=endx-startx+1;
+		int ypix=endy-starty+1;
+		float[] output=new float[xpix*ypix];
+		int counter=0;
+		float rad=0.5f*(float)size;
+		float rad2=rad*rad;
+		for(int i=starty;i<=endy;i++){
+			for(int j=startx;j<=endx;j++){
+				if(((j-xc)*(j-xc)+(i-yc)*(i-yc))<=rad2){
+					output[counter]=(float)(image[j+i*width]&0xff);
+					counter++;
+				}
+			}
+		}
+		return (float[])get_subarray(output,0,counter);
+	}
 
 	public static float[] get_region_pad(float[] image,int x,int y,int rwidth,int rheight,int width,int height){
 		// here we return the rectangular region centered on x and y
@@ -1509,9 +1600,15 @@ public class algutils{
 					System.arraycopy(source,off,temp,0,length);
 					return temp;
 				}else{
-					int[] temp=new int[length];
-					System.arraycopy(source,off,temp,0,length);
-					return temp;
+					if(source instanceof double[]){
+						double[] temp=new double[length];
+						System.arraycopy(source,off,temp,0,length);
+						return temp;
+					} else {
+						int[] temp=new int[length];
+						System.arraycopy(source,off,temp,0,length);
+						return temp;
+					}
 				}
 			}
 		}

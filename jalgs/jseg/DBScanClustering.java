@@ -85,5 +85,16 @@ public class DBScanClustering{
 		}
 		return one;
 	}
+
+	public static List<float[]> arrays2list(float[][] coords){
+		//converts a ndim x npts array to a point list
+		List<float[]> ptlist=new ArrayList<float[]>();
+		for(int i=0;i<coords[0].length;i++){
+			float[] temp=new float[coords.length];
+			for(int j=0;j<coords.length;j++) temp[j]=coords[j][i];
+			ptlist.add(temp);
+		}
+		return ptlist;
+	}
 	
 }

@@ -56,6 +56,28 @@ public class jsmooth{
 		return retdata;
 	}
 	
+	public static float[] smooth2D(float[] data,int width,int height,int size,String stat){
+		//here size is the size of the smoothing kernel
+		float[] retdata=new float[width*height];
+		for(int i=0;i<height;i++){
+			for(int j=0;j<width;j++){
+				retdata[j+i*width]=algutils.get_region_stat(stat,data,j,i,size,size,width,height);
+			}
+		}
+		return retdata;
+	}
+	
+	public static float[] smooth2DCircle(Object data,int width,int height,int size,String stat){
+		//here size is the size of the smoothing kernel
+		float[] retdata=new float[width*height];
+		for(int i=0;i<height;i++){
+			for(int j=0;j<width;j++){
+				retdata[j+i*width]=algutils.get_circle_stat(stat,data,j,i,size,width,height);
+			}
+		}
+		return retdata;
+	}
+	
 	public static float[] smooth2Dobjects(float[] data,int width,int height,int size,float[] objects){
 		//here size is the size of the smoothing kernel
 		float[] retdata=new float[width*height];

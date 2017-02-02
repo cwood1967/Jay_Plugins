@@ -36,6 +36,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.util.List;
 
 /**
  * This class is an extended ImageWindow that displays line graphs. This class
@@ -76,6 +77,26 @@ public class PlotWindow4 extends ImageWindow implements ActionListener,Clipboard
 	public PlotWindow4(String title1,String xLabel1,String yLabel1,float[] yValues1){
 		super(createImage(title1));
 		p3=new Plot4(xLabel1,yLabel1,yValues1);
+	}
+	
+	public PlotWindow4(String title1,String xLabel1,String yLabel1,List<List<float[]>> points){
+		super(createImage(title1));
+		int maxsize=0;
+		int[] npts=new int[points.size()];
+		for(int i=0;i<points.size();i++){
+			npts[i]=points.get(i).size();
+			if(npts[i]>maxsize) maxsize=npts[i];
+		}
+		float[][] xvals=new float[npts.length][maxsize];
+		float[][] yvals=new float[npts.length][maxsize];
+		for(int i=0;i<points.size();i++){
+			List<float[]> series=points.get(i);
+			for(int j=0;j<series.size();j++){
+				float[] coords=series.get(j);
+				xvals[i][j]=coords[0]; yvals[i][j]=coords[1];
+			}
+		}
+		p3=new Plot4(xLabel1,yLabel1,xvals,yvals,npts);
 	}
 
 	public PlotWindow4(String title1,Plot4 plot){
