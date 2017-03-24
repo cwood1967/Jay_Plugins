@@ -60,6 +60,7 @@ public class PlotColumn{
 	public static final int BOTTOM_MARGIN=50;
 	public int shapesize=8;
 	public int fontsize=14;
+	public boolean centered_data=true;
 	protected float magnification,magratio;
 	public static final String[] color_names={"black","blue","green","red","magenta","cyan","yellow","orange"};
 	public static final String[] shape_names={"line","square","+","x","triangle"};
@@ -632,7 +633,8 @@ public class PlotColumn{
     				int[] newyvals=new int[npts[i]];
     				for(int j=0;j<npts[i];j++){
     					newyvals[j]=newtopmargin+frame.height-(int)((xValues[i][j]-yMin)*yScale);
-    					newxvals[j]=(int)(random.unidev(xend,xstart)+0.5);
+    					if(!centered_data) newxvals[j]=(int)(random.unidev(xend,xstart)+0.5);
+    					else newxvals[j]=(int)(0.5f*(float)(xend+xstart)+0.5f);
     				}
     				pr.drawPolyshape(newxvals,newyvals,shapes[i],npts[i]);
     			}

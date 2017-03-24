@@ -1639,7 +1639,11 @@ public class findblobs3 implements Runnable{
 		// the algorithm came from the orignal BinaryProcessor ImageJ class
 		int pass=0;
 		int pixelsRemoved;
-		clear_edges(image);
+		//need to eliminate edge pixels, clearing edge objects can be too dramatic
+		//clear_edges(image);
+		//try just clearing the edge pixels
+		for(int i=0;i<width;i++){image[i]=0.0f; image[i+(height-1)*width]=0.0f;}
+		for(int i=0;i<height;i++){image[width*i]=0.0f; image[width*i+width-1]=0.0f;}
 		do{
 			pixelsRemoved=thin(pass++,table,image);
 			pixelsRemoved=thin(pass++,table,image);

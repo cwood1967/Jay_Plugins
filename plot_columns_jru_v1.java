@@ -76,13 +76,24 @@ public class plot_columns_jru_v1 implements PlugIn {
 			if(haszvals) zvals=new float[nlines];
 			float[] errs=null;
 			if(haserrs) errs=new float[nlines];
+			int nlines2=0;
 			for(int i=0;i<nlines;i++){
-				String[] data=split_string_tab(tp.getLine(i));
-				if(hasxvals) xvals[i]=Float.parseFloat(data[xindex]);
-				else xvals[i]=(float)i+1;
-				yvals[i]=Float.parseFloat(data[yindex]);
-				if(haszvals) zvals[i]=Float.parseFloat(data[zindex]);
-				if(haserrs) errs[i]=Float.parseFloat(data[errsindex]);
+				//String[] data=split_string_tab(tp.getLine(i));
+				String[] data=table_tools.split(tp.getLine(i),"\t",false);
+				if(data[yindex].length()<=0) continue;
+				if(hasxvals) xvals[nlines2]=Float.parseFloat(data[xindex]);
+				else xvals[nlines2]=(float)i+1;
+				yvals[nlines2]=Float.parseFloat(data[yindex]);
+				if(haszvals) zvals[nlines2]=Float.parseFloat(data[zindex]);
+				if(haserrs) errs[nlines2]=Float.parseFloat(data[errsindex]);
+				nlines2++;
+			}
+			if(nlines2<nlines){
+				yvals=(float[])algutils.get_subarray(yvals,0,nlines2);
+				xvals=(float[])algutils.get_subarray(xvals,0,nlines2);
+				if(haszvals) zvals=(float[])algutils.get_subarray(zvals,0,nlines2);
+				if(haserrs) errs=(float[])algutils.get_subarray(errs,0,nlines2);
+				nlines=nlines2;
 			}
 			if(sorty){
 				int[] order=jsort.javasort_order(yvals);

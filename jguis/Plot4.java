@@ -1231,11 +1231,13 @@ public class Plot4{
 	}
 
 	public ImageProcessor get8Processor(){
+		//some colors are swapping here for some reason.
 		ColorProcessor cp=getProcessor();
 		if(cp==null)
 			return null;
 		int[] pixels=(int[])cp.getPixels();
 		byte[] pixels8=new byte[pixels.length];
+		//lut colors are 0white, 1black, 2blue, 3green, 4red, 5magenta, 6cyan, 7yellow, 8orange
 		byte[] rLUT=new byte[256];
 		rLUT[0]=(byte)255;
 		rLUT[4]=(byte)255;

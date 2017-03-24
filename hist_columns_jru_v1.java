@@ -56,16 +56,16 @@ public class hist_columns_jru_v1 implements PlugIn {
 				int linect=0;
 				for(int i=0;i<nlines;i++){
 					String temp=tp.getLine(i);
-					if(temp.length()>0){
-						String[] data=split_string_tab(temp);
-						try{
-							if(xindex<data.length) xvals[linect]=Float.parseFloat(data[xindex]);
-							else xvals[linect]=Float.NaN;
-							if(yindex<data.length) yvals[linect]=Float.parseFloat(data[yindex]);
-							else yvals[linect]=Float.NaN;
-							linect++;
-						}catch(NumberFormatException e){}
-					}
+					if(temp.length()<=0) continue;
+					String[] data=table_tools.split(temp,"\t",false);
+					if(data[yindex].length()<=0) continue;
+					try{
+						if(xindex<data.length) xvals[linect]=Float.parseFloat(data[xindex]);
+						else xvals[linect]=Float.NaN;
+						if(yindex<data.length) yvals[linect]=Float.parseFloat(data[yindex]);
+						else yvals[linect]=Float.NaN;
+						linect++;
+					}catch(NumberFormatException e){}
 				}
 				if(linect!=nlines){
 					xvals=(float[])algutils.get_subarray(xvals,0,linect);
@@ -76,14 +76,14 @@ public class hist_columns_jru_v1 implements PlugIn {
 				int linect=0;
 				for(int i=0;i<nlines;i++){
 					String temp=tp.getLine(i);
-					if(temp.length()>0){
-						String[] data=split_string_tab(temp);
-						try{
-							if(yindex<data.length) yvals[linect]=Float.parseFloat(data[yindex]);
-							else yvals[linect]=Float.NaN;
-							linect++;
-						}catch(NumberFormatException e){}
-					}
+					if(temp.length()<=0) continue;
+					String[] data=table_tools.split(temp,"\t",false);
+					if(data[yindex].length()<=0) continue;
+					try{
+						if(yindex<data.length) yvals[linect]=Float.parseFloat(data[yindex]);
+						else yvals[linect]=Float.NaN;
+						linect++;
+					}catch(NumberFormatException e){}
 				}
 				if(linect!=nlines){
 					yvals=(float[])algutils.get_subarray(yvals,0,linect);
