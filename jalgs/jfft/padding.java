@@ -69,6 +69,78 @@ public class padding{
 		return output;
 	}
 	
+	public static Object get_region2_padmirrored(Object source,int x,int y,int rwidth,int rheight,int width,int height){
+		if(source instanceof byte[]) return get_region2_padmirrored((byte[])source,x,y,rwidth,rheight,width,height);
+		else if(source instanceof short[]) return get_region2_padmirrored((short[])source,x,y,rwidth,rheight,width,height);
+		else return get_region2_padmirrored((float[])source,x,y,rwidth,rheight,width,height);
+	}
 	
+	public static byte[] get_region2_padmirrored(byte[] source,int x,int y,int rwidth,int rheight,int width,int height){
+		byte[] output=new byte[rwidth*rheight];
+		int counter=0;
+		for(int i=y;i<(y+rheight);i++){
+			int ypos=i;
+			if(ypos<0) ypos=-ypos;
+			if(ypos>=height) ypos=2*height-ypos-1;
+			for(int j=x;j<(x+rwidth);j++){
+				int xpos=j;
+				if(xpos<0) xpos=-xpos;
+				if(xpos>=width) xpos=2*width-xpos-1;
+				output[counter]=source[xpos+ypos*width];
+				counter++;
+			}
+		}
+		return output;
+	}
+	
+	public static short[] get_region2_padmirrored(short[] source,int x,int y,int rwidth,int rheight,int width,int height){
+		short[] output=new short[rwidth*rheight];
+		int counter=0;
+		for(int i=y;i<(y+rheight);i++){
+			int ypos=i;
+			if(ypos<0) ypos=-ypos;
+			if(ypos>=height) ypos=2*height-ypos-1;
+			for(int j=x;j<(x+rwidth);j++){
+				int xpos=j;
+				if(xpos<0) xpos=-xpos;
+				if(xpos>=width) xpos=2*width-xpos-1;
+				output[counter]=source[xpos+ypos*width]; //getting an array out of bounds here on the source side
+				counter++;
+			}
+		}
+		return output;
+	}
+	
+	public static float[] get_region2_padmirrored(float[] source,int x,int y,int rwidth,int rheight,int width,int height){
+		float[] output=new float[rwidth*rheight];
+		int counter=0;
+		for(int i=y;i<(y+rheight);i++){
+			int ypos=i;
+			if(ypos<0) ypos=-ypos;
+			if(ypos>=height) ypos=2*height-ypos-1;
+			for(int j=x;j<(x+rwidth);j++){
+				int xpos=j;
+				if(xpos<0) xpos=-xpos;
+				if(xpos>=width) xpos=2*width-xpos-1;
+				output[counter]=source[xpos+ypos*width];
+				counter++;
+			}
+		}
+		return output;
+	}
+	
+	public static float[] get_region2_padzeros(float[] source,int x,int y,int rwidth,int rheight,int width,int height){
+		float[] output=new float[rwidth*rheight];
+		for(int i=y;i<(y+rheight);i++){
+			if(i<0) continue;
+			if(i>=height) continue;
+			for(int j=x;j<(x+rwidth);j++){
+				if(j<0) continue;
+				if(j>=width) continue;
+				output[j-x+(i-y)*rwidth]=source[j+i*width];
+			}
+		}
+		return output;
+	}
 
 }

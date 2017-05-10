@@ -236,5 +236,16 @@ public class rngs{
 		float[] temp=random_arrayf(length,0.0f,1.0f);
 		return jsort.get_javasort_order(temp);
 	}
+	
+	public float[] random_fractions(int ncat){
+		float[] fractions=new float[ncat];
+		float sum=0.0f;
+		for(int i=0;i<ncat;i++){
+			fractions[i]=(float)unidev(1.0,0.0);
+			sum+=fractions[i];
+		}
+		for(int i=0;i<ncat;i++) fractions[i]/=sum;
+		return fractions;
+	}
 
 }

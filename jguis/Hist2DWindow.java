@@ -69,7 +69,7 @@ public class Hist2DWindow extends Panel implements ActionListener,AdjustmentList
 	private Label dispminlabel,dispmaxlabel,scalehistlabel,scorelabel,xlabel,ylabel,slicelabel,xavglabel,yavglabel,threshlabel;
 	private Label xstdevlabel,ystdevlabel,zstdevlabel,zavglabel;
 	private Label roiwidthlabel,roiheightlabel,roixlabel,roiylabel,slabel,s0label,offlabel,backlabel;
-	private Button smooth_button,revert_button,savehist_button,saveimg_button,saveyimg_button,unmix_button;
+	private Button smooth_button,revert_button,savehist_button,saveimg_button,saveyimg_button,unmix_button,unmix_button2;
 	CheckboxGroup roishapegroup;
 	Checkbox roisquare,roioval;
 	CheckboxGroup plottypegroup;
@@ -204,6 +204,9 @@ public class Hist2DWindow extends Panel implements ActionListener,AdjustmentList
 		unmix_button=new Button("Unmix Histogram");
 		unmix_button.setBounds(100+256+10+110,10+imageheight+50+260,100,20);
 		unmix_button.addActionListener(this);
+		unmix_button2=new Button("Unmix Histogram2");
+		unmix_button2.setBounds(100+256+10+110,10+imageheight+50+290,100,20);
+		unmix_button2.addActionListener(this);
 
 		roiwidthlabel=new Label("Roi Width");
 		roiwidthlabel.setBounds(100+256+10,10+imageheight+50,100,20);
@@ -412,6 +415,7 @@ public class Hist2DWindow extends Panel implements ActionListener,AdjustmentList
 		add(ylabel);
 		add(saveyimg_button);
 		add(unmix_button);
+		add(unmix_button2);
 		add(ascalecheck);
 		add(slicelabel);
 		add(sliceval);
@@ -536,6 +540,9 @@ public class Hist2DWindow extends Panel implements ActionListener,AdjustmentList
 		}
 		if(e.getSource()==unmix_button){
 			if(datastack!=null) save_unmixed();
+		}
+		if(e.getSource()==unmix_button2){
+			if(datastack!=null) unmix_geom();
 		}
 		xmin=Float.parseFloat(xminval.getText());
 		xmax=Float.parseFloat(xmaxval.getText());
@@ -1416,7 +1423,33 @@ public class Hist2DWindow extends Panel implements ActionListener,AdjustmentList
 		unimp.setDimensions(unmixed.length/slices,slices,1);
 		new CompositeImage(unimp,CompositeImage.COLOR).show();
 	}
-
+	
+	void unmix_geom(){
+		GenericDialog gd2=new GenericDialog("Number_of_components");
+		gd2.addNumericField("How_Many_Components?",3,0);
+		gd2.showDialog(); if(gd2.wasCanceled()) return;
+		int ncomp=(int)gd2.getNextNumber();
+		GenericDialog gd=new GenericDialog("Options");
+		for(int i=0;i<ncomp;i++){
+			gd.addNumericField("G"+(i+1),0.0,5,15,null);
+			gd.addNumericField("S"+(i+1),0.0,5,15,null);
+		}
+		gd.showDialog(); if(gd.wasCanceled()) return;
+		float[][] positions=new float[ncomp][2];
+		for(int i=0;i<ncomp;i++){
+			positions[i][0]=(float)gd.getNextNumber();
+			positions[i][1]=(float)gd.getNextNumber();
+		}
+		Object[] temp=PU.unmix_phasor_geom3(positions,this);
+		float[][] unmixed=(float[][])temp[0];
+		float[][] fractions=(float[][])temp[1];
+		ImagePlus unimp=new ImagePlus("Unmixed",jutils.array2stack(unmixed,width,height));
+		unimp.setOpenAsHyperStack(true);
+		unimp.setDimensions(unmixed.length/slices,slices,1);
+		new CompositeImage(unimp,CompositeImage.COLOR).show();
+		new ImagePlus("Fractions",jutils.array2stack(fractions,256,256)).show();
+	}
+	
 	void init_options(){
 		String dir=System.getProperty("user.home");
 		try{

@@ -29,6 +29,7 @@ import ij.process.ShortProcessor;
 import ij.text.TextWindow;
 import jalgs.algutils;
 import jalgs.interpolation;
+import jalgs.jdataio;
 import jalgs.jstatistics;
 import jalgs.jseg.findblobs3;
 import jalgs.jseg.measure_object;
@@ -42,16 +43,21 @@ import java.awt.Rectangle;
 import java.awt.image.IndexColorModel;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.URL;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.List;
 import java.util.Vector;
 
 public class jutils{
@@ -2130,6 +2136,35 @@ public class jutils{
 			retstack[i]=sub_roll_ball_back(algutils.convert_arr_float(stack[i]),ballrad,width,height);
 		}
 		return retstack;
+	}
+	
+	public static void load_plugins_list(){
+		ClassLoader cl=IJ.getClassLoader();
+		/*IJ.log(cl.toString());
+		try{
+			Enumeration<URL> resource=cl.getResources("Plugins_List.xls");
+			IJ.log(resource.nextElement().toString());
+		}catch(IOException e){
+			return;
+		}*/
+		InputStream is=cl.getResourceAsStream("Plugins_List.xls");
+		jdataio jdio=new jdataio();
+		ByteArrayOutputStream buffer=new ByteArrayOutputStream();
+		int len=0;
+		byte[] data=new byte[16384];
+		try{
+			while((len=is.read(data,0,data.length))!=-1){
+				buffer.write(data,0,len);
+			}
+			buffer.flush();
+		}catch(IOException e){
+			IJ.log(jdio.getExceptionTrace(e));
+			return;
+		}
+		List<List<String>> listtable=table_tools.table2listtable(buffer.toString(),"\t");
+		String[] col_labels=table_tools.list2stringarray(listtable.get(0));
+		listtable.remove(0);
+		table_tools.create_table("Jay_Plugins_List",listtable,col_labels);
 	}
 
 	public static void run_command_in_IJ_thread(String command,String args){

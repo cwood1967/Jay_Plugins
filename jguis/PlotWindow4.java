@@ -470,6 +470,8 @@ public class PlotWindow4 extends ImageWindow implements ActionListener,Clipboard
 			else name+=".pw2";
 		}
 		imp.setTitle(name);
+		String dir2=directory.replace("\\","\\\\");
+		if(Recorder.record && !IJ.isMacro()) Recorder.record("run","export plot jru v1", "save=["+dir2+name+"]");
 		saveAsObject(directory+File.separator+name);
 	}
 

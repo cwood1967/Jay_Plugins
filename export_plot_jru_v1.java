@@ -23,6 +23,7 @@ public class export_plot_jru_v1 implements PlugIn {
 		SaveDialog sd=new SaveDialog("Save Plot Object File",arg,title);
 		String dir=sd.getDirectory();
 		String name=sd.getFileName();
+		iw.setTitle(name);
 		jutils.savePW4(iw,dir+File.separator+name);
 	}
 
