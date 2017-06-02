@@ -280,3 +280,4 @@ Plugins>Stowers>Jay_Unruh>Segmentation Tools	rois 2 objects jru v1	rois_2_object
 Plugins>Stowers>Jay_Unruh>Table Tools	filter table spatial rois jru v1	filter_table_spatial_rois_jru_v1	filters a table with x and y columns (in pixels) according to a set of rois in the RoiManager--can add an roi index column to the table
 Plugins>Stowers>Jay_Unruh>Misc Tools	multi point roi 2 roimanager jru v1	multi_point_roi_2_roimanager_jru_v1	converts a multi point roi to multi single rois in the roi manager
 Plugins>Stowers>Jay_Unruh>Segmentation Tools	stitch stics jru v1	stitch_stics_jru_v1	uses a set of small images along the common seam of each image (like stics or optic flow) to stitch a set of images (configured as a time lapse)
+Plugins>Stowers>Jay_Unruh>Trajectory Tools	kernel density est jru v1	kernel_density_est_jru_v1	uses kernel density estimation to smooth a 1D histogram or create a smoothed 1D histogram of a trajectory

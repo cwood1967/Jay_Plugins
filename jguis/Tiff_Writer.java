@@ -39,6 +39,8 @@ public class Tiff_Writer{
 	private boolean littleEndian=true;
 	private byte buffer[]=new byte[8];
 	byte[] description;
+	public BufferedOutputStream outg;
+	public long nextIFDg;
 
 	private ImagePlus imp;
 	private ImageProcessor ip;
@@ -177,6 +179,83 @@ public class Tiff_Writer{
 				}
 			}
 			out.close();
+		}catch(IOException e){
+			IJ.showMessage(e.getMessage());
+			return false;
+		}
+		return true;
+	}
+	
+	/************
+	 * this version uses the saveFrame method to write each frame instead of the frame interface
+	 * @param path
+	 * @return
+	 */
+	public boolean saveAsTiffStack2(String path){
+		if(imp.isComposite()){
+			saveDisplayRangesAndLuts();
+		}
+		saveSizes();
+		try{
+			outg=new BufferedOutputStream(new FileOutputStream(path));
+			byte[] hdr={73,73,42,0,8,0,0,0};
+			// write the header
+			outg.write(hdr);
+			nextIFDg=imageOffset+stackframes;
+			if(nextIFDg+stackframes*ifdSize>0xffffffffL)
+				nextIFDg=0L;
+			writeIFD(outg,imageOffset,(int)nextIFDg);
+			if(ip instanceof ColorProcessor)
+				writeBitsPerPixel(outg);
+			writeDescription(outg);
+			if(scaleSize>0)
+				writeScale(outg);
+			if(metaDataSize>0)
+				writeMetaData(outg);
+			// write the image data frame by frame using the saveFrame method
+		}catch(IOException e){
+			IJ.showMessage(e.getMessage());
+			return false;
+		}
+		return true;
+	}
+	
+	public void saveFrame(Object pix){
+		jdataio jdio=new jdataio();
+		if(pix instanceof byte[]){
+			jdio.writebytearray(outg,(byte[])pix);
+		}else{
+			if(pix instanceof short[]){
+				jdio.writeintelshortarray(outg,(short[])pix);
+			}else{
+				if(pix instanceof float[]){
+					jdio.writeintelfloatarray(outg,(float[])pix);
+				}else{
+					jdio.writeintelintarray(outg,(int[])pix);
+				}
+			}
+		}
+	}
+	
+	public boolean endWrite(){
+		try{
+    		if(nextIFDg>0L){
+    			int ifdSize2=ifdSize;
+    			if(metaDataSize>0){
+    				metaDataSize=0;
+    				nEntries-=2;
+    				ifdSize2-=2*12;
+    			}
+    			for(int i=2;i<=stackframes;i++){
+    				if(i==stackframes)
+    					nextIFDg=0;
+    				else
+    					nextIFDg+=ifdSize2;
+    				imageOffset+=imageSize;
+    				writeIFD(outg,imageOffset,(int)nextIFDg);
+    			}
+    		}
+    		outg.close();
 		}catch(IOException e){
 			IJ.showMessage(e.getMessage());
 			return false;

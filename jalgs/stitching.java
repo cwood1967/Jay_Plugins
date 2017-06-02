@@ -379,8 +379,10 @@ public class stitching{
 				}
 			}
 		}
-		hover/=(float)nhpairs;
-		vover/=(float)nvpairs;
+		if(nhpairs>0) hover/=(float)nhpairs;
+		else hover=(float)height;
+		if(nvpairs>0) vover/=(float)nvpairs;
+		else vover=(float)width;
 		return new float[]{(float)width-hover,(float)height-vover};
 	}
 	
@@ -1311,6 +1313,7 @@ public class stitching{
 	 * @return an array of image pairs
 	 */
 	public float[][] getSeamSubImagePairs(Object image1,Object image2,int[] orientation,float[] guessshift,int subsize){
+		//should probably evenly space the images but for now just shift the last one so it doesn't overextend
 		if(orientation[0]==0){ //horizontal pairs
 			Object image11=image1; Object image12=image2;
 			float[] shifts=guessshift.clone();
@@ -1353,9 +1356,10 @@ public class stitching{
 				overlaps[2*i+1]=algutils.convert_arr_float2(padding.get_region2_padmirrored(image12,x2,ystart2,subsize,subsize,width,height));
 			}
 			return overlaps;
+		} else {
+			//for now, don't consider diagonal pairs
+			return null;
 		}
-		//for now, don't consider diagonal pairs
-		return null;
 	}
 	
 	/******************
