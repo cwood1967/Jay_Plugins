@@ -100,6 +100,16 @@ public class findblobs3 implements Runnable{
 			}
 		}
 	}
+	
+	public void fillPolygon(byte[] mask,Polygon poly){
+		Rectangle r=poly.getBounds();
+		Rectangle r2=new Rectangle(0,0,width,height);
+		for(int j=r.y;j<(r.y+r.height);j++){
+			for(int k=r.x;k<(r.x+r.width);k++){
+				if(r2.contains(k,j) && poly.contains(k,j)) mask[k+j*width]=(byte)255;
+			}
+		}
+	}
 
 	public static byte[] threshimage(Object data,float thresh){
 		byte[] bimage=null;

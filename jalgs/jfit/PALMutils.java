@@ -23,8 +23,12 @@ public class PALMutils{
 		maxerr=2.0f*stdev;
 		r=0.625f; // r is the ratio of original pixel size to stdev
 	}
-
+	
 	public float[] render_const_size(float[][] molecules,float[] limits,float stdev2,float multiplier){
+		return render_const_size(molecules,limits,stdev2,multiplier,false);
+	}
+
+	public float[] render_const_size(float[][] molecules,float[] limits,float stdev2,float multiplier,boolean ignoreamp){
 		// the molecules array has columns with x,y,amp,c2,t,z
 		// this method ignores the z and t component
 		if(stdev2==0.0f)
@@ -38,10 +42,12 @@ public class PALMutils{
 		ymax=ysize/scaling+ymin;
 		float[] image=new float[xsize*ysize];
 		for(int i=0;i<molecules[0].length;i++){
+			float amp=multiplier*molecules[2][i];
+			if(ignoreamp) amp=1.0f;
 			float pixelerr=scaling*stdev2;
 			float pixelx=((molecules[0][i]-xmin)/(xmax-xmin))*xsize;
 			float pixely=((molecules[1][i]-ymin)/(ymax-ymin))*ysize;
-			gf.draw_2D_func(image,pixelx,pixely,xsize,ysize,pixelerr,multiplier*molecules[2][i],2.0f);
+			gf.draw_2D_func(image,pixelx,pixely,xsize,ysize,pixelerr,amp,2.0f);
 		}
 		return image;
 	}
@@ -89,6 +95,69 @@ public class PALMutils{
 			int tempy=(int)(pixely+0.5f);
 			if(tempx>=0&&tempx<xsize&&tempy>=0&&tempy<ysize){
 				image[tempx+tempy*xsize]+=photons;
+			}
+		}
+		return image;
+	}
+	
+	public float[] render_circle_size(float[][] molecules,float[] limits,float multiplier,float radius,boolean ignoreamp){
+		// the molecules array has columns with x,y,amp,c2,t,z
+		// this method ignores the z and t component
+		float xmin=limits[0];
+		float xmax=limits[1];
+		float ymin=limits[2];
+		float ymax=limits[3];
+		float scaling=xsize/(xmax-xmin); //in pix/um
+		// recalculate ymax to make sure image size is retained appropriately
+		ymax=ysize/scaling+ymin;
+		float[] circletemp=null;
+		float radpix=radius*scaling;
+		int halfsize=1+(int)radpix;
+		int size=halfsize*2;
+		if(radpix>=1.0f){
+			circletemp=new float[size*size];
+			float rad2=radpix*radpix;
+			for(int i=0;i<size;i++){
+				int ypos=i-halfsize;
+				float ypos2=(float)(ypos*ypos);
+				for(int j=0;j<size;j++){
+					int xpos=j-halfsize;
+					float xpos2=(float)(xpos*xpos);
+					if((xpos2+ypos2)<=rad2){
+						circletemp[j+i*size]=1.0f;
+					}
+				}
+			}
+		}
+		float[] image=new float[xsize*ysize];
+		for(int i=0;i<molecules[0].length;i++){
+			float photons=multiplier;
+			if(!ignoreamp){
+				photons=multiplier*molecules[2][i]*(stdev*stdev*2.0f*(float)Math.PI);
+				photons/=gain;
+			}
+			float pixelx=((molecules[0][i]-xmin)/(xmax-xmin))*xsize;
+			float pixely=((molecules[1][i]-ymin)/(ymax-ymin))*ysize;
+			int tempx=(int)(pixelx+0.5f);
+			int tempy=(int)(pixely+0.5f);
+			if(radpix<1.0f){
+				//here we draw a single pixel
+    			if(tempx>=0&&tempx<xsize&&tempy>=0&&tempy<ysize){
+    				image[tempx+tempy*xsize]+=photons;
+    			}
+			} else {
+				//here we draw the circle template
+				for(int k=0;k<size;k++){
+					int ypos=tempy-halfsize+k;
+					if(ypos<0) continue; if(ypos>=ysize) continue;
+					int offset=ypos*xsize;
+					int offset2=k*size;
+					for(int j=0;j<size;j++){
+						int xpos=tempx-halfsize+j;
+						if(xpos<0) continue; if(xpos>=xsize) continue;
+						image[offset+xpos]+=photons*circletemp[offset2+j];
+					}
+				}
 			}
 		}
 		return image;

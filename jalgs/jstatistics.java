@@ -83,6 +83,17 @@ public class jstatistics{
 		return spectrum;
 	}
 	
+	/***************
+	 * 
+	 * @param stat
+	 * @param data
+	 * @param width
+	 * @param height
+	 * @param mask
+	 * @param lims: int array with xmin,xmax,ymin,ymax inclusive
+	 * @param extras
+	 * @return
+	 */
 	public static float getstatistic(String stat,Object data,int width,int height,boolean[] mask,int[] lims,float[] extras){
 		if(data instanceof float[]){
 			float[] tempdata=(float[])data;
@@ -1730,6 +1741,15 @@ public class jstatistics{
 		return retarray;
 	}
 	
+	/************************
+	 * 
+	 * @param data
+	 * @param width
+	 * @param height
+	 * @param mask
+	 * @param lims: int array with xmin,xmax,ymin,ymax inclusive
+	 * @return
+	 */
 	public static short[] getmask(short[] data,int width,int height,boolean[] mask,int[] lims){
 		int npts=getmaskarea(mask,width,height,lims);
 		if(npts==0)

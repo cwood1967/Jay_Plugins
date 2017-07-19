@@ -281,3 +281,6 @@ Plugins>Stowers>Jay_Unruh>Table Tools	filter table spatial rois jru v1	filter_ta
 Plugins>Stowers>Jay_Unruh>Misc Tools	multi point roi 2 roimanager jru v1	multi_point_roi_2_roimanager_jru_v1	converts a multi point roi to multi single rois in the roi manager
 Plugins>Stowers>Jay_Unruh>Segmentation Tools	stitch stics jru v1	stitch_stics_jru_v1	uses a set of small images along the common seam of each image (like stics or optic flow) to stitch a set of images (configured as a time lapse)
 Plugins>Stowers>Jay_Unruh>Trajectory Tools	kernel density est jru v1	kernel_density_est_jru_v1	uses kernel density estimation to smooth a 1D histogram or create a smoothed 1D histogram of a trajectory
+Plugins>Stowers>Jay_Unruh>Segmentation Tools	track max not mask jru v2	track_max_not_mask_jru_v2	slightly faster tracking plugin that uses a slightly different algorithm (sorts image intensities above threshold to speed search)
+Plugins>Stowers>Jay_Unruh>Table Tools	make subtable jru v1	make_subtable_jru_v1	makes a subtable out of selected columns of a table
+Plugins>Stowers>Jay_Unruh>Misc Tools	custom yeast nuclear table jru v4	custom_yeast_nuclear_table_jru_v4	custom transformation of a table of yeast nuclear localization data

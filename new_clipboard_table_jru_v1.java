@@ -25,7 +25,7 @@ public class new_clipboard_table_jru_v1 implements PlugIn {
 		gd.addCheckbox("Contains_Column_Titles?",true);
 		String[] delims={"tab","comma","space"};
 		gd.addChoice("Delimiter",delims,delims[0]);
-		gd.addCheckbox("Treat_Consecutive_Delims_As_One",true);
+		gd.addCheckbox("Treat_Consecutive_Delims_As_One",false);
 		gd.addStringField("Title","Clipboard");
 		gd.showDialog(); if(gd.wasCanceled()){return;}
 		boolean titles=gd.getNextBoolean();
