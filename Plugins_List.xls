@@ -284,3 +284,5 @@ Plugins>Stowers>Jay_Unruh>Trajectory Tools	kernel density est jru v1	kernel_dens
 Plugins>Stowers>Jay_Unruh>Segmentation Tools	track max not mask jru v2	track_max_not_mask_jru_v2	slightly faster tracking plugin that uses a slightly different algorithm (sorts image intensities above threshold to speed search)
 Plugins>Stowers>Jay_Unruh>Table Tools	make subtable jru v1	make_subtable_jru_v1	makes a subtable out of selected columns of a table
 Plugins>Stowers>Jay_Unruh>Misc Tools	custom yeast nuclear table jru v4	custom_yeast_nuclear_table_jru_v4	custom transformation of a table of yeast nuclear localization data
+Plugins>Stowers>Jay_Unruh>Misc Tools	custom yeast nuclear table jru v5	custom_yeast_nuclear_table_jru_v5	custom transformation of a table of yeast nuclear localization data
+Plugins>Stowers>Jay_Unruh>Sim Tools	sim kt tracking jru v1	sim_kt_tracking_jru_v1	runs many simulations of kinetochore loss from a sleeve

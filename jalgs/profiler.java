@@ -24,7 +24,7 @@ public class profiler{
 			length+=linelength;
 		}
 		if(connected){
-			length+=(int)Math.sqrt((xvals[nlines-1]-xvals[0])*(xvals[nlines-1]-xvals[0])+(yvals[nlines-1]-yvals[0])*(yvals[nlines-1]-yvals[0]))-1;
+			length+=(int)Math.sqrt((xvals[nlines]-xvals[0])*(xvals[nlines]-xvals[0])+(yvals[nlines]-yvals[0])*(yvals[nlines]-yvals[0]))-1;
 		}else{
 			length+=1;
 		}
@@ -40,7 +40,7 @@ public class profiler{
 			length+=linelength;
 		}
 		if(connected){
-			length+=(int)get3DLength(new float[]{xvals[nlines-1],yvals[nlines-1],zvals[nlines-1],xvals[0],yvals[0],zvals[0]})-1;
+			length+=(int)get3DLength(new float[]{xvals[nlines],yvals[nlines],zvals[nlines],xvals[0],yvals[0],zvals[0]})-1;
 		}else{
 			length+=1;
 		}
@@ -97,7 +97,7 @@ public class profiler{
 			counter+=(templength-1);
 		}
 		if(connected){
-			float[] coords={xvals[nlines-1],yvals[nlines-1],xvals[0],yvals[0]};
+			float[] coords={xvals[nlines],yvals[nlines],xvals[0],yvals[0]};
 			int templength=0;
 			int tempoutsign=outsign(polyroi,coords);
 			for(int j=0;j<linewidth;j++){
@@ -176,7 +176,7 @@ public class profiler{
 			counter+=(templength-1);
 		}
 		if(connected){
-			float[] coords={xvals[nlines-1],yvals[nlines-1],xvals[0],yvals[0]};
+			float[] coords={xvals[nlines],yvals[nlines],xvals[0],yvals[0]};
 			int templength=0;
 			int tempoutsign=outsign(xvals,yvals,coords);
 			for(int j=0;j<linewidth;j++){
@@ -244,6 +244,7 @@ public class profiler{
 				for(int k=0;k<templength-1;k++){
 					profile[counter+k]+=tempfloat[k]/linewidth;
 				}
+				//add on the final point if the profile is not connected
 				if(i==(nlines-1)&&!connected && tempfloat.length>1){
 					profile[counter+templength-1]+=tempfloat[templength-1]/linewidth;
 				}
@@ -251,7 +252,7 @@ public class profiler{
 			counter+=(templength-1);
 		}
 		if(connected){
-			float[] coords={xvals[nlines-1],yvals[nlines-1],xvals[0],yvals[0]};
+			float[] coords={xvals[nlines],yvals[nlines],xvals[0],yvals[0]};
 			int templength=0;
 			int tempoutsign=outsign(polyroi,coords);
 			for(int j=0;j<linewidth;j++){
@@ -313,7 +314,7 @@ public class profiler{
 			counter+=(templength-1);
 		}
 		if(connected){
-			float[] coords={xvals[nlines-1],yvals[nlines-1],xvals[0],yvals[0]};
+			float[] coords={xvals[nlines],yvals[nlines],xvals[0],yvals[0]};
 			int templength=0;
 			int tempoutsign=outsign(xvals,yvals,coords);
 			for(int j=0;j<linewidth;j++){

@@ -4,6 +4,7 @@ import ij.IJ;
 import jalgs.jdataio;
 
 import java.io.BufferedOutputStream;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -17,14 +18,24 @@ public class export_flowcyte{
 	private static String delim2="|";
 	
 	public boolean write_table(List<List<String>> table,String[] labels,String dir,String fname){
-		int nch=labels.length;
 		int npts=table.size();
 		float[][] data=new float[npts][];
 		for(int i=0;i<npts;i++){
 			data[i]=table_tools.get_row_array(table,i);
 		}
+		return write_table(data,labels,dir,fname);
+	}
+	
+	public boolean write_table(float[][] data,String[] labels,String dir,String fname){
+		return write_table(data,labels,dir+fname);
+	}
+	
+	public boolean write_table(float[][] data,String[] labels,String path){
+		int nch=labels.length;
+		int npts=data.length;
+		String fname=(new File(path)).getName();
 		try{
-			OutputStream os=new BufferedOutputStream(new FileOutputStream(dir+fname));
+			OutputStream os=new BufferedOutputStream(new FileOutputStream(path));
 			//now write the header
 			int offset=0;
 			String header=get_FCS_header(nch,npts);

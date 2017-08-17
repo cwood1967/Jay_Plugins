@@ -18,6 +18,7 @@ import ij.process.ImageProcessor;
 import jalgs.FrameInterface;
 import jalgs.algutils;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -46,16 +47,21 @@ public class LOCI_series_reader implements FrameInterface{
 	public String[] names;
 
 	public LOCI_series_reader(String directory,String fname,boolean nometa){
+		this(directory+fname,nometa);
+	}
+	
+	public LOCI_series_reader(String path,boolean nometa){
 		this.nometa=nometa;
 		this.s=-1;
 		omexmlMetadata=null;
+		String fname=(new File(path)).getName();
 		if(!nometa)
 			omexmlMetadata=MetadataTools.createOMEXMLMetadata();
 			r=new ImageProcessorReader(new ChannelSeparator(LociPrefs.makeImageReader()));
 		try{
 			if(!nometa)
 				r.setMetadataStore(omexmlMetadata);
-			r.setId(directory+fname);
+			r.setId(path);
 			nseries=r.getSeriesCount();
 			int maxdigits=Integer.toString(nseries).length();
 			names=new String[nseries];
