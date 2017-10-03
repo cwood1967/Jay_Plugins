@@ -234,11 +234,11 @@ public class LOCI_file_reader{
 				int counter=0;
 				for(int i=limits[4];i<=limits[5];i++){
 					for(int j=limits[0];j<=limits[1];j++){
-						Object[] tempzstack=new Object[slices];
+						Object[] tempzstack=new Object[tempslices];
 						for(int k=limits[2];k<=limits[3];k++){
 							int index=get_stack_index(j,k,i,channels,slices,frames,order,chsizes);
 							ImageProcessor ip=r.openProcessors(index)[0];
-							tempzstack[k]=ip.getPixels();
+							tempzstack[k-limits[2]]=ip.getPixels();
 						}
 						Object projslice=algutils.get_stack_proj_stat(projstat,tempzstack,width,height,tempslices,null);
 						stack.addSlice("",projslice);
@@ -250,7 +250,7 @@ public class LOCI_file_reader{
 						counter++;
 					}
 				}
-				slices=1;
+				tempslices=1;
 			}else{
 				int counter=0;
 				for(int i=limits[4];i<=limits[5];i++){

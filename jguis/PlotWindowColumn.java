@@ -359,7 +359,7 @@ public class PlotWindowColumn extends ImageWindow implements ActionListener,Clip
 		String directory=fd.getDirectory();
 		defaultDirectory=directory;
 		fd.dispose();*/
-		SaveDialog sd=new SaveDialog("Save as Plot Object...",getTitle(),"pw2");
+		SaveDialog sd=new SaveDialog("Save as Plot Object...",getTitle(),".pw2");
 		String name=sd.getFileName();
 		String directory=sd.getDirectory();
 		if(name==null||name==""||directory==null||directory=="")
@@ -490,7 +490,7 @@ public class PlotWindowColumn extends ImageWindow implements ActionListener,Clip
 			showList();
 		}else{
 			if(b==save){
-				IJ.log("test");
+				//IJ.log("test");
 				GenericDialog gd=new GenericDialog("Save Options");
 				String[] savechoice={"Text","Plot Object"};
 				gd.addChoice("File Type?",savechoice,savechoice[1]);

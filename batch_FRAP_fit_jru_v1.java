@@ -70,7 +70,11 @@ public class batch_FRAP_fit_jru_v1 implements PlugIn {
 			tw.append(sb.toString());
 			plots[i]=new Plot4("Frame","Intensity",get_data_fit(data[i],bf,tempint,temp),null);
 		}
-		new PlotStack4("Fits",plots).draw();
+		if(plots.length==1){
+			new PlotWindow4("Fits",plots[0]).draw();
+		} else {
+			new PlotStack4("Fits",plots).draw();
+		}
 	}
 
 	public float[][] get_data_fit(float[] data,int bf,int totpoints,float[] params){

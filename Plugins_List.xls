@@ -238,7 +238,7 @@ Plugins>Stowers>Jay_Unruh>Misc Tools	remove dark pixels jru v1	remove_dark_pixel
 Plugins>Stowers>Jay_Unruh>Table Tools	rename table jru v1	rename_table_jru_v1	renames a table window
 Plugins>Stowers>Jay_Unruh>Table Tools	export table jru v1	export_table_jru_v1	exports a table as different text file types
 Plugins>Stowers>Jay_Unruh>Image Tools	channel math jru v1	channel_math_jru_v1	performs math operations on different channels independently
-Plugins>Stowers>Jay_Unruh>File Tools	stitch pe library jru v2	stitch_pe_library_jru_v2	stitches a perkin elmer raw tiles data set with either the metadata positions or a plot window coordinate set
+Plugins>Stowers>Jay_Unruh>File Tools	stitch pe library jru v2	stitch_pe_library_jru_v2	stitches a perkin elmer raw tiles data set with either the metadata positions (from open pe library tiles) or a plot window coordinate set
 Plugins>Stowers>Jay_Unruh>Trajectory Tools	loess smooth jru v1	loess_smooth_jru_v1	smooths a trajectory by fitting a sliding window with a line or cubic polynomial
 Plugins>Stowers>Jay_Unruh>Trajectory Tools	fit traj double gaus jru v1	fit_traj_double_gaus_jru_v1	fits a trajectory with a double gaussian function
 Plugins>Stowers>Jay_Unruh>Misc Tools	histogram 2D spectral phasor jru v1	histogram_2D_spectral_phasor_jru_v1	uses a fourier phasor histogram to interpret linear combinations of spectral components and get their profiles
@@ -286,3 +286,10 @@ Plugins>Stowers>Jay_Unruh>Table Tools	make subtable jru v1	make_subtable_jru_v1	
 Plugins>Stowers>Jay_Unruh>Misc Tools	custom yeast nuclear table jru v4	custom_yeast_nuclear_table_jru_v4	custom transformation of a table of yeast nuclear localization data
 Plugins>Stowers>Jay_Unruh>Misc Tools	custom yeast nuclear table jru v5	custom_yeast_nuclear_table_jru_v5	custom transformation of a table of yeast nuclear localization data
 Plugins>Stowers>Jay_Unruh>Sim Tools	sim kt tracking jru v1	sim_kt_tracking_jru_v1	runs many simulations of kinetochore loss from a sleeve
+Plugins>Stowers>Jay_Unruh>Misc Tools	find single double spots jru v1	find_single_double_spots_jru_v1	finds single and double spots in the selected channel of a z stack and adds them to the roi manager
+Plugins>Stowers>Jay_Unruh>Image Tools	merge channels jru v1	merge_channels_jru_v1	merges multiple single or multichannel images together
+Plugins>Stowers>Jay_Unruh>File Tools	open pe library tiles jru v1	open_pe_library_tiles_jru_v1	opens a set of pe library tiles as a time series as well as the metadata position information
+Plugins>Stowers>Jay_Unruh>Table Tools	duplicate table jru v1	duplicate_table_jru_v1	duplicates a table and appends _1 to the name
+Plugins>Stowers>Jay_Unruh>Table Tools	filter table jru v2	filter_table_jru_v2	filters a table in a macro recordable fashion
+Plugins>Stowers>Jay_Unruh>Table Tools	new table jru v1	new_table_jru_v1	creates a new empty table with the specified number of columns and column labels
+Plugins>Stowers>Jay_Unruh>Table Tools	add table row jru v1	add_table_row_jru_v1	adds a row to a table

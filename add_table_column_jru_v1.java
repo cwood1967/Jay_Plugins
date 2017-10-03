@@ -48,6 +48,7 @@ public class add_table_column_jru_v1 implements PlugIn {
 				new_col_labels[i]=new_col_labels[i].replace('-','_');
 				new_col_labels[i]=new_col_labels[i].replace('/','_');
 				new_col_labels[i]=new_col_labels[i].replace('#','_');
+				new_col_labels[i]=new_col_labels[i].replace('^','_');
 				//IJ.log(new_col_labels[i]);
 			}
 			GenericDialog gd2=new GenericDialog("Options");

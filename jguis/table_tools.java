@@ -889,7 +889,7 @@ public class table_tools{
 	/*****************
 	 * prints a 1D arraylist with tab, comma, or space delimiting
 	 * @param data
-	 * @param delim: 0=tab,1=comma, 2=space
+	 * @param delim: 0=tab,1=comma, 2=space, 3=newline
 	 * @return
 	 */
 	public static String print_string_array(String[] data,int delim){

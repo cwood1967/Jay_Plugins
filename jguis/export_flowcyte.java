@@ -119,7 +119,8 @@ public class export_flowcyte{
 		StringBuffer sb=new StringBuffer();
 		for(int i=0;i<labels.length;i++){
 			sb.append(labeldelim+"P"+(i+1)+"S"+delim2+labels[i]);
-			sb.append(labeldelim+"P"+(i+1)+"N"+delim2+"P"+(i+1));
+			//sb.append(labeldelim+"P"+(i+1)+"N"+delim2+"P"+(i+1));
+			sb.append(labeldelim+"P"+(i+1)+"N"+delim2+labels[i]);
 			sb.append(labeldelim+"P"+(i+1)+"E"+delim2+"0,0");
 			sb.append(labeldelim+"P"+(i+1)+"G"+delim2+"1");
 			sb.append(labeldelim+"P"+(i+1)+"R"+delim2+ranges[i]);

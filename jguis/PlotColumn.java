@@ -166,6 +166,13 @@ public class PlotColumn{
 			npts[i]=jdio.readintelint(is);
 			jdio.readintelfloatfile(is,npts[i],xValues[i]);
 		}
+		boolean annotated=jdio.readintelint(is)==1;
+		if(annotated){
+			annotations=new String[nseries];
+			for(int i=0;i<nseries;i++){
+				annotations[i]=jdio.readstring(is);
+			}
+		}
 		updateHistogram();
 		magnification=1.0f;
 		magratio=(float)HEIGHT/(float)WIDTH;
@@ -1007,6 +1014,10 @@ public class PlotColumn{
 			jdio.writeintelint(os,colors[i]);
     		jdio.writeintelint(os,npts[i]);
     		jdio.writeintelfloatarray(os,xValues[i],npts[i]);
+		}
+		if(annotations!=null && annotations.length==nseries){
+			jdio.writeintelint(os,1);
+			for(int i=0;i<nseries;i++) jdio.writestring(os,annotations[i]);
 		}
 	}
 

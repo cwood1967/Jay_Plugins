@@ -135,7 +135,7 @@ public class gridfit{
 					counter++;
 					if(paramid<2){
 						StringBuffer resstring=new StringBuffer();
-						resstring.append(""+paramid+" , "+counter+" , "+(float)minc2);
+						resstring.append(""+paramid+" , "+counter+" , "+(float)tempc2);
 						for(int i=0;i<params.length;i++){
 							resstring.append(" , "+(float)params[i]);
 						}

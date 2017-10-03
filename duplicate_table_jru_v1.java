@@ -32,7 +32,7 @@ public class duplicate_table_jru_v1 implements PlugIn {
 			String temptext=tp.getText();
 			int pos=temptext.indexOf("\n");
 			temptext=temptext.substring(pos+1,temptext.length());
-			new TextWindow(tw.getTitle(),tp.getColumnHeadings(),temptext,200,400);
+			new TextWindow(tw.getTitle()+"_1",tp.getColumnHeadings(),temptext,200,400);
 		} else {
 			IJ.showMessage("wrong window type");
 		}

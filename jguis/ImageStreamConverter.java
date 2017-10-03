@@ -1,9 +1,6 @@
 package jguis;
 
 import java.awt.Polygon;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 import ij.ImagePlus;
 import jalgs.algutils;
@@ -19,22 +16,29 @@ public class ImageStreamConverter{
 	public static void main(String[] args){
 		//this is a stand-alone program to convert ImageStream images to FCS files
 		//need to decide which parameters get recorded
-		//the first arg is the file path, the second is the fcs filename
+		//the first arg is the file path, the second is the fcs filename, the third is the mask/trans channel number (consecutive)
 		LOCI_series_reader lsr=new LOCI_series_reader(args[0],false);
 		int nrows=lsr.nseries/2;
-		int maskch=3; int transch=3;
-		int[] outchans={0,6}; //assume first two are the numerator and denominator
+		int maskch=Integer.parseInt(args[2])-1; int transch=maskch;
+		//int[] outchans={0,6};
+		ImagePlus imp1=(ImagePlus)lsr.getNextFrame();
+		ImagePlus imp2=(ImagePlus)lsr.getNextFrame();
+		int nch=imp1.getStackSize();
+		int[] outchans=new int[nch];
+		for(int i=0;i<nch;i++) outchans[i]=i; //by default get all of the channel parameters
 		String[] collabels=getColLabels(outchans);
-		int ncols=collabels.length;
-		float[][] analysis=new float[nrows][ncols];
+		//int ncols=collabels.length;
+		float[][] analysis=new float[nrows][];
 		System.out.println("image "+0+" of "+nrows+" converting");
-		for(int i=0;i<nrows;i++) {
-			ImagePlus imp1=(ImagePlus)lsr.getNextFrame();
-			ImagePlus imp2=(ImagePlus)lsr.getNextFrame();
-			System.out.println("\rimage "+(i+1)+" of "+nrows+" converting");
+		for(int i=0;i<nrows;i++){
+			if(i!=0) {
+				imp1=(ImagePlus)lsr.getNextFrame();
+				imp2=(ImagePlus)lsr.getNextFrame();
+			}
+			if((i%100)==0) System.out.print("\rimage "+(i+1)+" of "+nrows+" converting");
 			Object[] temp=analyzeImage(imp1,imp2,maskch,transch,null,true,0.0f,50,true);
 			float[] params=(float[])temp[0];
-			params=(float[])algutils.combine_arrays(new float[]{i},temp);
+			params=(float[])algutils.combine_arrays(new float[]{i},params);
 			analysis[i]=params;
 		}
 		lsr.dispose();
@@ -44,13 +48,13 @@ public class ImageStreamConverter{
 	}
 	
 	public static String[] getColLabels(int[] outchans){
-		String[] statlabels= {"avg","std","min","max","punctaarea","punctaavg"};
+		String[] statlabels= {"avg","std","min","max","punctaarea","punctaavg","punctacirc"};
 		String[] labels= {"object","area","transavg","gradcv","gradavg","gradmax","major","aspectratio","circ"};
 		String[] combined=new String[labels.length+outchans.length*statlabels.length];
 		for(int i=0;i<labels.length;i++) combined[i]=labels[i];
 		for(int j=0;j<outchans.length;j++){
     		for(int i=0;i<statlabels.length;i++) {
-    			combined[labels.length+i+j*statlabels.length]="ch"+(j+1)+statlabels[i];
+    			combined[labels.length+i+j*statlabels.length]="ch"+(outchans[j]+1)+statlabels[i];
     		}
 		}
 		return combined; 
@@ -67,18 +71,27 @@ public class ImageStreamConverter{
 		for(int i=0;i<back.length;i++) if(object[i]==0.0f) back[i]=1.0f;
 		Polygon outline=fb.get_object_outline(object,1);
 		float[] grmsd=gradRMSD(stack[transch],outline,width,height); //5 params with area first
-		float[] ellipse=ellipseParams(outline); //6 parameters with circ last
+		float[] ellipse=ellipseParams(outline); //3 parameters with circ last
 		float[] params=(float[])algutils.combine_arrays(grmsd,ellipse);
 		float[] backs=new float[stack.length];
 		for(int i=0;i<stack.length;i++) backs[i]=fb.get_object_stats(back,1,stack[i],"Avg");
-		float maskarea=fb.get_object_stats(object,1,stack[0],"Count");
+		//float maskarea=fb.get_object_stats(object,1,stack[0],"Count");
+		int nstats=7;
 		int offset=params.length;
-		float[] temp=(float[])algutils.expand_array(params,offset+stack.length);
+		float[] temp=(float[])algutils.expand_array(params,offset+stack.length*nstats);
+		float divbystdev=8.0f; float rollballrad=3.0f; float procthresh=0.5f;
+		float[][] punctastats=getPunctaStats(stack,object,width,height,divbystdev,rollballrad,procthresh,back);
 		for(int i=0;i<stack.length;i++){
 			float avg=fb.get_object_stats(object,1,stack[i],"Avg");
-			temp[i+offset]=avg-backs[i];
+			temp[i*nstats+offset]=avg-backs[i];
+			float std=fb.get_object_stats(object,1,stack[i],"stdev");
+			float min=fb.get_object_stats(object,1,stack[i],"min");
+			float max=fb.get_object_stats(object,1,stack[i],"max");
+			temp[i*nstats+offset+1]=std; temp[i*nstats+offset+2]=min-backs[i]; temp[i*nstats+offset+3]=max-backs[i];
+			temp[i*nstats+offset+4]=punctastats[i][0]; temp[i*nstats+offset+5]=punctastats[i][1]; temp[i*nstats+offset+6]=punctastats[i][2];
 		}
 		if(!noimages){
+			//this is the only place that outchans is used
 			float[][] images=new float[outchans.length+1][maxdim*maxdim];
 			float xshift=0.5f*(float)(maxdim-width);
 			float yshift=0.5f*(float)(maxdim-height);
@@ -100,15 +113,16 @@ public class ImageStreamConverter{
 	public static float[] ellipseParams(Polygon outline){
 		//find the centroid
 		//float[] centroid=measure_object.centroid(outline);
-		if(outline==null) return new float[6];
+		if(outline==null) return new float[3];
 		float[] ellipseparams=measure_object.get_ellipse_parameters(outline);
-		//these are x,y,angle,major,minor
+		//these are 0x,1y,2angle,3major,4minor
 		//change minor to aspect ratio
 		ellipseparams[4]/=ellipseparams[3];
 		float circularity=measure_object.circularity(outline);
 		float[] params=(float[])algutils.expand_array(ellipseparams,ellipseparams.length+1);
 		params[params.length-1]=circularity;
-		return params;
+		float[] params2= {params[3],params[4],params[5]}; //these are major, aspect, circularity
+		return params2;
 	}
 
 	public static float[] gradRMSD(Object pix,Polygon outline1,int width,int height){
@@ -126,11 +140,12 @@ public class ImageStreamConverter{
 		return new float[]{cnt*0.11f,avg,sobelcv,sobelavg,sobelmax};
 	}
 	
-	public static float[][] getPunctaStats(Object[] pix,float[] object,int width,int height,float divbystdev,float rollballrad,float procthresh){
-		//for each pix image, get the puncta area and intensity
-		float[][] stats=new float[pix.length][2];
+	public static float[][] getPunctaStats(Object[] pix,float[] object,int width,int height,float divbystdev,float rollballrad,float procthresh,float[] back){
+		//for each pix image, get the puncta area, intensity, and circularity
+		float[][] stats=new float[pix.length][3];
 		for(int i=0;i<pix.length;i++) {
 			float[] temp=algutils.convert_arr_float(pix[i]);
+			for(int j=0;j<temp.length;j++) temp[j]-=back[i];
 			float[] blurred=temp.clone();
 			//blur the image
 			jsmooth.blur2D(temp,divbystdev,width,height);
@@ -145,13 +160,22 @@ public class ImageStreamConverter{
 			//subtract a rolling ball
 			blurred=jutils.sub_roll_ball_back(blurred,rollballrad,width,height);
 			//now find the avg and area of regions above procthresh (and inside the object)
+			float[] obj=new float[width*height];
 			for(int j=0;j<width*height;j++) {
 				if(object[j]>0.0f && blurred[j]>procthresh) {
 					stats[i][0]+=1.0f;
+					obj[j]=1.0f;
 					stats[i][1]+=temp[j];
 				}
 			}
-			if(stats[i][0]>0.0f) stats[i][1]/=stats[i][0];
+			if(stats[i][0]>0.0f) { //find puncta parameters only if there is a punctum
+				stats[i][1]/=stats[i][0];
+    			findblobs3 fb=new findblobs3(width,height);
+    			obj=fb.dofindblobs(obj,0.5f);
+    			float[][] apc=fb.get_area_perim_circ(obj);
+    			float avgcirc=jstatistics.getstatistic("Avg",apc[2],null);
+    			stats[i][2]=avgcirc;
+			}
 		}
 		return stats;
 	}

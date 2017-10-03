@@ -707,6 +707,63 @@ public class findblobs3D{
 		return stats;
 	}
 	
+	/********************************************************
+	 * gets all of of the object stats from multiple channels
+	 * @param objects
+	 * @param measurement: the intensity image to measure
+	 * @param lims
+	 * @param stat
+	 * @return
+	 */
+	public float[][] get_all_object_stats(float[][] objects,Object[][] measurement,int[][] lims,String stat){
+		float[][] stats=new float[measurement.length][nobjects];
+		int[] areas=get_areas(objects);
+		for(int i=0;i<nobjects;i++){
+			float[][] temp=new float[measurement.length][areas[i]];
+			int counter=0;
+			if(measurement[0][0] instanceof float[]){
+    			for(int j=lims[i][4];j<=lims[i][5];j++){
+    				for(int k=lims[i][2];k<=lims[i][3];k++){
+    					for(int l=lims[i][0];l<=lims[i][1];l++){
+    						int xyindex=l+k*width;
+    						if((int)objects[j][xyindex]==(i+1)){
+    							for(int m=0;m<measurement.length;m++) temp[m][counter]=((float[])measurement[m][j])[xyindex];
+    							counter++;
+    						}
+    					}
+    				}
+    			}
+			} else if(measurement[0][0] instanceof short[]){
+				for(int j=lims[i][4];j<=lims[i][5];j++){
+    				for(int k=lims[i][2];k<=lims[i][3];k++){
+    					for(int l=lims[i][0];l<=lims[i][1];l++){
+    						int xyindex=l+k*width;
+    						if((int)objects[j][xyindex]==(i+1)){
+    							for(int m=0;m<measurement.length;m++) temp[m][counter]=((short[])measurement[m][j])[xyindex]&0xffff;
+    							counter++;
+    						}
+    					}
+    				}
+    			}
+			} else if(measurement[0][0] instanceof byte[]){
+				for(int j=lims[i][4];j<=lims[i][5];j++){
+    				for(int k=lims[i][2];k<=lims[i][3];k++){
+    					for(int l=lims[i][0];l<=lims[i][1];l++){
+    						int xyindex=l+k*width;
+    						if((int)objects[j][xyindex]==(i+1)){
+    							for(int m=0;m<measurement.length;m++) temp[m][counter]=((byte[])measurement[m][j])[xyindex]&0xff;
+    							counter++;
+    						}
+    					}
+    				}
+    			}
+			}
+			for(int j=0;j<temp.length;j++) stats[j][i]=jstatistics.getstatistic(stat,temp[j],null);
+			if(gui!=null) gui.showProgress(i,nobjects);
+		}
+		return stats;
+	}
+	
 	public int[] get_areas(float[][] objects){
 		int nblobs=get_nblobs(objects);
 		int[] hist=new int[nblobs];
@@ -809,6 +866,41 @@ public class findblobs3D{
 			centroids[i][1]/=centroids[i][3];
 			centroids[i][2]/=centroids[i][3];
 			centroids[i][4]/=centroids[i][3];
+		}
+		return centroids;
+	}
+	
+	/********************
+	 * here we have multiple measurement channels
+	 * @param objects
+	 * @param measurement
+	 * @return
+	 */
+	public float[][] getCentroidsAreasAvgs(float[][] objects,Object[][] measurement){
+		int nblobs=get_nblobs(objects);
+		float[][] centroids=new float[nblobs][4+measurement.length];
+		for(int i=0;i<objects.length;i++){ //loop over z
+			float[][] tempmeas=new float[measurement.length][];
+			for(int j=0;j<measurement.length;j++) tempmeas[j]=algutils.convert_arr_float2(measurement[j][i]);
+			for(int j=0;j<height;j++){
+				for(int k=0;k<width;k++){
+					int index=(int)objects[i][k+j*width];
+					if(index>0){
+						centroids[index-1][0]+=k;
+						centroids[index-1][1]+=j;
+						centroids[index-1][2]+=i;
+						centroids[index-1][3]+=1.0f;
+						for(int l=0;l<measurement.length;l++) centroids[index-1][4+l]+=tempmeas[l][k+j*width];
+					}
+				}
+				if(gui!=null) gui.showProgress(j+i*height,depth*height);
+			}
+		}
+		for(int i=0;i<nblobs;i++){
+			centroids[i][0]/=centroids[i][3];
+			centroids[i][1]/=centroids[i][3];
+			centroids[i][2]/=centroids[i][3];
+			for(int l=0;l<measurement.length;l++) centroids[i][4+l]/=centroids[i][3];
 		}
 		return centroids;
 	}

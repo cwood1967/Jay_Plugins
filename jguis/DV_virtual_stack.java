@@ -115,7 +115,9 @@ public class DV_virtual_stack extends VirtualStack{
 		fi.offset=oldoffset;
 		fi.nImages=oldnImages;
 		fi.longOffset=oldlongOffset;
-		return timp.getProcessor();
+		ImageProcessor tip=timp.getProcessor();
+		tip.flipVertical();
+		return tip;
 	}
 
 	public int map_slice_number(int stackslice){

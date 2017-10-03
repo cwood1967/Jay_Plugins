@@ -901,35 +901,55 @@ public class interpolation{
 		int prev=(int)end;
 		float integral=0.0f;
 		if(prev<next)
-			integral+=(end-begin)*interp1D(func,len,0.5f*(begin+end)); // we are
-		// contained
-		// within
-		// an
-		// interval
+			integral+=(end-begin)*interp1D(func,len,0.5f*(begin+end)); // we are contained within an interval
 		else{
-			integral+=(next-begin)*interp1D(func,len,0.5f*(next+begin)); // get
-			// the
-			// interval
-			// to
-			// the
-			// next
-			// point
-			integral+=(end-prev)*interp1D(func,len,0.5f*(end+prev)); // get
-			// the
-			// interval
-			// to
-			// the
-			// end
-			// point
+			integral+=(next-begin)*interp1D(func,len,0.5f*(next+begin)); // get the interval to the next point
+			integral+=(end-prev)*interp1D(func,len,0.5f*(end+prev)); // get the interval to the end point
 			for(int i=next;i<prev;i++)
-				integral+=interp1D(func,len,i+0.5f); // an all the
-			// ones in
-			// between
+				integral+=interp1D(func,len,i+0.5f); // and all the ones in between
 		}
 		if(cumulative)
 			return integral;
 		else
 			return integral/(end-begin);
+	}
+	
+	public static float[] makeMirror(float[] avgvals){
+		float[] newavgvals=new float[2*avgvals.length-1];
+		int halfsize=avgvals.length-1;
+		//int newwidth=2*avgvals.length-1;
+		//here make sure we don't replicate the center point twice
+			newavgvals[halfsize]=avgvals[0];
+			for(int j=1;j<avgvals.length;j++){
+				newavgvals[j+halfsize]=avgvals[j];
+				newavgvals[halfsize-j]=avgvals[j];
+			}
+		return newavgvals;
+	}
+	
+	public static float[] circavg(Object data,int width,int height,int rsize,float xc,float yc,boolean makeMirror1){
+		float[] circavg1=circavg(data,width,height,rsize,xc,yc);
+		if(!makeMirror1) return circavg1;
+		else return makeMirror(circavg1);
+	}
+	
+	public static float[] circavg(Object data,int width,int height,int rsize,float xc,float yc){
+		float twopi=(float)(2.0*Math.PI);
+		float[] avgvals=new float[rsize];
+		avgvals[0]=interpolation.interp2D(data,width,height,xc,yc);
+		for(int j=1;j<rsize;j++){
+			float angleincrement=1.0f/(float)j;
+			int angles=(int)(twopi/angleincrement);
+			angleincrement=twopi/(float)angles;
+			for(int k=0;k<angles;k++){
+				float angle=angleincrement*(float)k;
+				float x=(float)Math.cos(angle)*(float)j+xc;
+				float y=(float)Math.sin(angle)*(float)j+yc;
+				avgvals[j]+=interp2D(data,width,height,x,y);
+			}
+			avgvals[j]/=(float)angles;
+		}
+		return avgvals;
 	}
 	
 	public static float[][] resampleTraj(float[][] traj,float dx){
