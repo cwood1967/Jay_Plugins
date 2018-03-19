@@ -10,7 +10,10 @@ package jguis;
 
 import ij.IJ;
 import ij.gui.GenericDialog;
+import ij.io.SaveDialog;
+import ij.plugin.frame.Recorder;
 import ij.text.TextWindow;
+import jalgs.jdataio;
 import jalgs.jdist;
 import jalgs.jstatistics;
 import jalgs.jfit.NLLSfit_v2;
@@ -33,6 +36,14 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -44,7 +55,7 @@ public class AutoCorrFitWindow extends Panel implements ActionListener,NLLSfitin
 	public final static int WR=600;
 	public Dimension totalSize=new Dimension();
 
-	private Button fitavgbutton,fitglobalbutton,clearparamsbutton,undobutton,geterrorsbutton,outbutton,montecarlobutton;
+	private Button fitavgbutton,fitglobalbutton,clearparamsbutton,undobutton,geterrorsbutton,outbutton,montecarlobutton,savebutton;
 	private Button editconsbutton;
 	private Checkbox useweightscheck;
 	private PlotWindow4 pwavg,pwfit,pwavgtraj,pwfittraj;
@@ -96,6 +107,140 @@ public class AutoCorrFitWindow extends Panel implements ActionListener,NLLSfitin
 		f.setSize(panel.totalSize);
 		f.setVisible(true);
 		panel.requestFocus();
+	}
+	
+	public static void launch_from_file(String filename,boolean brightcorr1) {
+		try{
+			InputStream is=new BufferedInputStream(new FileInputStream(filename));
+			final AutoCorrFitWindow cw=new AutoCorrFitWindow();
+			cw.init_from_is(is,brightcorr1);
+			is.close();
+			AutoCorrFitWindow.launch_frame(cw);
+		}catch(IOException e){
+			return;
+		}
+	}
+	
+	public static boolean is_this(String filename) {
+		try{
+			InputStream is=new BufferedInputStream(new FileInputStream(filename));
+			jdataio jdio=new jdataio();
+			String temp=jdio.readstring(is);
+			int type=jdio.readintelint(is);
+			is.close();
+			if(temp.equals("jfcs_file_type") && type==0) return true;
+			else return false;
+		}catch(IOException e){
+			return false;
+		}
+	}
+	
+	public void init_from_is(InputStream is,boolean brightcorr1) {
+		jdataio jdio=new jdataio();
+		String temp=jdio.readstring(is);
+		int type=jdio.readintelint(is);
+		int nseries=jdio.readintelint(is);
+		int npts=jdio.readintelint(is);
+		int trajpts=jdio.readintelint(is);
+		float khz=jdio.readintelfloat(is);
+		int psfflag=jdio.readintelint(is);
+		boolean brightcorr=(jdio.readintelint(is)==1);
+		boolean changebrightcorr=false;
+		if(brightcorr1!=brightcorr) changebrightcorr=true;
+		String[] names=new String[nseries];
+		float[] xvals=new float[npts];
+		float[][] corr=new float[nseries][npts];
+		float[][] trajectories=new float[nseries][trajpts];
+		float[] avg=new float[nseries];
+		float[] var=new float[nseries];
+		int[] selections=new int[nseries];
+		for(int i=0;i<nseries;i++) {names[i]=jdio.readstring(is);}
+		jdio.readintelfloatfile(is,npts,xvals);
+		for(int i=0;i<nseries;i++) jdio.readintelfloatfile(is,npts,corr[i]);
+		for(int i=0;i<nseries;i++) jdio.readintelfloatfile(is,trajpts,trajectories[i]);
+		jdio.readintelfloatfile(is,nseries,avg);
+		jdio.readintelfloatfile(is,nseries,var);
+		jdio.readintelintfile(is,nseries,selections);
+		//if we are changing the brightcorr status, do that here
+		if(changebrightcorr) {
+			if(brightcorr) { //here we undo brightcorr by dividing by avg
+				for(int i=0;i<nseries;i++) {
+					for(int j=0;j<npts;j++) corr[i][j]/=khz*avg[i];
+				}
+			} else { //here we apply brightcorr by multiplying by avg
+				for(int i=0;i<nseries;i++) {
+					for(int j=0;j<npts;j++) corr[i][j]*=khz*avg[i];
+				}
+			}
+			brightcorr=!brightcorr;
+		}
+		init(names,corr,xvals,trajectories,avg,var,khz,psfflag,brightcorr);
+		//now set up the selections
+		for(int i=0;i<nseries;i++) {
+			include[i]=(selections[i]==1);
+			datapanel.table.setValueAt(new Boolean(include[i]),i,0);
+		}
+		updateavg();
+		datapanel.table.setValueAt(""+(float)intensity1[ncurves],ncurves,2);
+		datapanel.table.setValueAt(""+(float)g01[ncurves],ncurves,3);
+		pwavg.updateSeries(this.avg,0,true);
+		float[][] temperrs=new float[2][];
+		temperrs[0]=errs;
+		temperrs[1]=new float[errs.length];
+		pwavg.addErrors(temperrs);
+		if(trajectories!=null){
+			pwavgtraj.updateSeries(avgtraj,0,true);
+		}
+	}
+	
+	public void savefile() {
+		SaveDialog sd=new SaveDialog("Save as JFCS Object...","My_Autocorr_File",".jfcs");
+		String name=sd.getFileName();
+		String directory=sd.getDirectory();
+		if(name==null||name==""||directory==null||directory=="")
+			return;
+		if(!name.endsWith(".jfcs")){
+			name+=".jfcs";
+		}
+		String dir2=directory.replace("\\","\\\\");
+		try{
+			OutputStream os=new BufferedOutputStream(new FileOutputStream(directory+File.separator+name));
+			save2os(os);
+			os.close();
+		}catch(IOException e){
+			return;
+		}
+	}
+	
+	public void save2os(OutputStream os) {
+		jdataio jdio=new jdataio();
+		jdio.writestring(os,"jfcs_file_type");
+		jdio.writeintelint(os,0);
+		jdio.writeintelint(os,ncurves);
+		jdio.writeintelint(os,npts);
+		float[][] temptraj=trajectories;
+		if(trajectories==null) {
+			temptraj=new float[ncurves][10];
+			for(int i=0;i<ncurves;i++) {
+				for(int j=0;j<10;j++) {
+					temptraj[i][j]=avgs[i];
+				}
+			}
+		}
+		jdio.writeintelint(os,temptraj[0].length);
+		jdio.writeintelfloat(os,(float)khz);
+		jdio.writeintelint(os,psfflag);
+		jdio.writeintelint(os,brightcorr?1:0);
+		for(int i=0;i<ncurves;i++) {jdio.writestring(os,names[i]);}
+		jdio.writeintelfloatarray(os,xvals[0]);
+		for(int i=0;i<ncurves;i++) {jdio.writeintelfloatarray(os,corr[i]);}
+		for(int i=0;i<ncurves;i++) {jdio.writeintelfloatarray(os,temptraj[i]);}
+		jdio.writeintelfloatarray(os,avgs);
+		jdio.writeintelfloatarray(os,vars);
+		for(int i=0;i<ncurves;i++) {
+			if(include[i]) jdio.writeintelint(os,1);
+			else jdio.writeintelint(os,0);
+		}
 	}
 
 	public void init(String[] names1,float[][] corr1,float[] xvals1,float[][] trajectories1,float[] avg1,float[] var1,float khz1,int psfflag1,boolean brightcorr1){
@@ -224,6 +369,11 @@ public class AutoCorrFitWindow extends Panel implements ActionListener,NLLSfitin
 		editconsbutton.setBounds(buttonsx,starty-25+50+50+50+30+50+50+50+50+30,100,40);
 		editconsbutton.addActionListener(this);
 		add(editconsbutton);
+		
+		savebutton=new Button("Save Analysis");
+		savebutton.setBounds(buttonsx,starty-25+50+50+50+30+50+50+50+50+30+50,100,40);
+		savebutton.addActionListener(this);
+		add(savebutton);
 
 		copylabel=new Label("copyright 2009 Jay Unruh (jru@stowers.org)");
 		copylabel.setBounds(10,810,250,20);
@@ -316,6 +466,9 @@ public class AutoCorrFitWindow extends Panel implements ActionListener,NLLSfitin
 		}
 		if(e.getSource()==editconsbutton){
 			showconstraintsdialog();
+		}
+		if(e.getSource()==savebutton){
+			savefile();
 		}
 	}
 

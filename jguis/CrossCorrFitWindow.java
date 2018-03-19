@@ -10,6 +10,8 @@ package jguis;
 
 import ij.IJ;
 import ij.gui.GenericDialog;
+import ij.io.SaveDialog;
+import jalgs.jdataio;
 import jalgs.jdist;
 import jalgs.jfit.NLLSfit;
 import jalgs.jfit.NLLSfitinterface;
@@ -28,6 +30,14 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -40,7 +50,7 @@ public class CrossCorrFitWindow extends Panel implements ActionListener,NLLSfiti
 	public final static int WR=800;
 	public Dimension totalSize=new Dimension();
 
-	private Button fitavgbutton,fitglobalbutton,clearparamsbutton,undobutton,geterrorsbutton;
+	private Button fitavgbutton,fitglobalbutton,clearparamsbutton,undobutton,geterrorsbutton,savebutton;
 	private Button editconsbutton;
 	private PlotWindow4 pwavg,pwfit,pwavgtraj,pwfittraj;
 	private int ncurves,nparams,npts,dispcurve,psfflag;
@@ -93,6 +103,170 @@ public class CrossCorrFitWindow extends Panel implements ActionListener,NLLSfiti
 		f.setVisible(true);
 		panel.requestFocus();
 	}
+	
+	public static void launch_from_file(String filename,boolean brightcorr1) {
+		try{
+			InputStream is=new BufferedInputStream(new FileInputStream(filename));
+			final CrossCorrFitWindow cw=new CrossCorrFitWindow();
+			cw.init_from_is(is,brightcorr1);
+			is.close();
+			CrossCorrFitWindow.launch_frame(cw);
+		}catch(IOException e){
+			return;
+		}
+	}
+	
+	public static boolean is_this(String filename) {
+		try{
+			InputStream is=new BufferedInputStream(new FileInputStream(filename));
+			jdataio jdio=new jdataio();
+			String temp=jdio.readstring(is);
+			int type=jdio.readintelint(is);
+			is.close();
+			if(temp.equals("jfcs_file_type") && type==1) return true;
+			else return false;
+		}catch(IOException e){
+			return false;
+		}
+	}
+	
+	public void init_from_is(InputStream is,boolean brightcorr1) {
+		jdataio jdio=new jdataio();
+		String temp=jdio.readstring(is);
+		int type=jdio.readintelint(is);
+		if(type!=1) {
+			IJ.error("wrong file type");
+		}
+		int nseries=jdio.readintelint(is);
+		int npts=jdio.readintelint(is);
+		int trajpts=jdio.readintelint(is);
+		float khz=jdio.readintelfloat(is);
+		int psfflag=jdio.readintelint(is);
+		boolean brightcorr=(jdio.readintelint(is)==1);
+		boolean changebrightcorr=false;
+		if(brightcorr1!=brightcorr) changebrightcorr=true;
+		String[] names=new String[nseries];
+		float[] xvals=new float[npts];
+		float[][][] corr=new float[nseries][3][npts];
+		float[][][] trajectories=new float[nseries][2][trajpts];
+		float[][] avg=new float[3][nseries];
+		float[][] var=new float[3][nseries];
+		int[] selections=new int[nseries];
+		for(int i=0;i<nseries;i++) {names[i]=jdio.readstring(is);}
+		jdio.readintelfloatfile(is,npts,xvals);
+		for(int i=0;i<nseries;i++) {
+			for(int j=0;j<3;j++) {
+				jdio.readintelfloatfile(is,npts,corr[i][j]);
+			}
+		}
+		for(int i=0;i<nseries;i++) {
+			for(int j=0;j<2;j++) {
+				jdio.readintelfloatfile(is,trajpts,trajectories[i][j]);
+			}
+		}
+		jdio.readintelfloatfile(is,nseries,avg[0]);
+		jdio.readintelfloatfile(is,nseries,avg[1]);
+		jdio.readintelfloatfile(is,nseries,avg[2]);
+		jdio.readintelfloatfile(is,nseries,var[0]);
+		jdio.readintelfloatfile(is,nseries,var[1]);
+		jdio.readintelfloatfile(is,nseries,var[2]);
+		jdio.readintelintfile(is,nseries,selections);
+		//if we are changing the brightcorr status, do that here
+		if(changebrightcorr) {
+			if(brightcorr) { //here we undo brightcorr by dividing by avg
+				for(int i=0;i<nseries;i++) {
+					for(int j=0;j<npts;j++) {
+						corr[i][0][j]/=khz*avg[0][i];
+						corr[i][1][j]/=khz*avg[1][i];
+						corr[i][2][j]/=khz*avg[2][i]; //is this right?
+					}
+				}
+			} else { //here we apply brightcorr by multiplying by avg
+				for(int i=0;i<nseries;i++) {
+					for(int j=0;j<npts;j++) {
+						corr[i][0][j]*=khz*avg[0][i];
+						corr[i][1][j]*=khz*avg[1][i];
+						corr[i][2][j]*=khz*avg[2][i];
+					}
+				}
+			}
+			brightcorr=!brightcorr;
+		}
+		init(names,corr,xvals,trajectories,avg,var,khz,psfflag,brightcorr);
+		//now set up the selections
+		for(int i=0;i<nseries;i++) {
+			include[i]=(selections[i]==1);
+			datapanel.table.setValueAt(new Boolean(include[i]),i,0);
+		}
+		updateavg();
+		datapanel.table.setValueAt(""+(float)intensity1[ncurves],ncurves,2);
+		datapanel.table.setValueAt(""+(float)g01[ncurves],ncurves,3);
+		pwavg.updateSeries(this.avg[0],0,true);
+		pwavg.updateSeries(this.avg[1],1,true);
+		pwavg.updateSeries(this.avg[2],2,true);
+	}
+	
+	public void savefile() {
+		SaveDialog sd=new SaveDialog("Save as JFCS Object...","My_Autocorr_File",".jfcs");
+		String name=sd.getFileName();
+		String directory=sd.getDirectory();
+		if(name==null||name==""||directory==null||directory=="")
+			return;
+		if(!name.endsWith(".jfcs")){
+			name+=".jfcs";
+		}
+		String dir2=directory.replace("\\","\\\\");
+		try{
+			OutputStream os=new BufferedOutputStream(new FileOutputStream(directory+File.separator+name));
+			save2os(os);
+			os.close();
+		}catch(IOException e){
+			return;
+		}
+	}
+	
+	public void save2os(OutputStream os) {
+		jdataio jdio=new jdataio();
+		jdio.writestring(os,"jfcs_file_type");
+		jdio.writeintelint(os,1);
+		jdio.writeintelint(os,ncurves);
+		jdio.writeintelint(os,npts);
+		float[][][] temptraj=trajectories;
+		if(trajectories==null) {
+			temptraj=new float[ncurves][2][10];
+			for(int i=0;i<ncurves;i++) {
+				for(int j=0;j<10;j++) {
+					temptraj[i][0][j]=avgs[0][i];
+					temptraj[i][1][j]=avgs[1][i];
+				}
+			}
+		}
+		jdio.writeintelint(os,temptraj[0][0].length);
+		jdio.writeintelfloat(os,(float)khz);
+		jdio.writeintelint(os,psfflag);
+		jdio.writeintelint(os,brightcorr?1:0);
+		for(int i=0;i<ncurves;i++) {jdio.writestring(os,names[i]);}
+		jdio.writeintelfloatarray(os,xvals[0][0]);
+		for(int i=0;i<ncurves;i++) {
+			for(int j=0;j<3;j++) {
+				jdio.writeintelfloatarray(os,corr[i][j]);
+			}
+		}
+		for(int i=0;i<ncurves;i++) {
+			jdio.writeintelfloatarray(os,temptraj[i][0]);
+			jdio.writeintelfloatarray(os,temptraj[i][1]);
+		}
+		jdio.writeintelfloatarray(os,avgs[0]);
+		jdio.writeintelfloatarray(os,avgs[1]);
+		jdio.writeintelfloatarray(os,avgs[2]);
+		jdio.writeintelfloatarray(os,vars[0]);
+		jdio.writeintelfloatarray(os,vars[1]);
+		jdio.writeintelfloatarray(os,vars[2]);
+		for(int i=0;i<ncurves;i++) {
+			if(include[i]) jdio.writeintelint(os,1);
+			else jdio.writeintelint(os,0);
+		}
+	}
 
 	public void init(String[] names1,float[][][] corr1,float[] xvals1,float[][][] trajectories1,float[][] avg1,float[][] var1,float khz1,int psfflag1,boolean brightcorr1){
 		setLayout(null);
@@ -139,8 +313,10 @@ public class CrossCorrFitWindow extends Panel implements ActionListener,NLLSfiti
 		for(int i=0;i<=ncurves;i++){
 			if(i!=ncurves){
 				tabledata[i][0]=new Boolean(true);
+				tabledata[i][1]=""+names[i];
+			} else {
+				tabledata[i][1]="Avg";
 			}
-			tabledata[i][1]=""+names[i];
 			tabledata[i][2]=""+intensity1[i];
 			tabledata[i][3]=""+g01[i];
 			tabledata[i][4]=""+intensity2[i];
@@ -220,6 +396,11 @@ public class CrossCorrFitWindow extends Panel implements ActionListener,NLLSfiti
 		geterrorsbutton.setBounds(buttonsx,starty-25+50+50+50+30+30+50+50+50+50,100,40);
 		geterrorsbutton.addActionListener(this);
 		add(geterrorsbutton);
+		
+		savebutton=new Button("Save Analysis");
+		savebutton.setBounds(buttonsx,starty-25+50+50+50+30+30+50+50+50+50+50,100,40);
+		savebutton.addActionListener(this);
+		add(savebutton);
 
 		copylabel=new Label("copyright 2009 Jay Unruh (jru@stowers.org) non-profit use only");
 		copylabel.setBounds(10,790,400,20);
@@ -334,6 +515,9 @@ public class CrossCorrFitWindow extends Panel implements ActionListener,NLLSfiti
 		}
 		if(e.getSource()==editconsbutton){
 			showconstraintsdialog();
+		}
+		if(e.getSource()==savebutton){
+			savefile();
 		}
 	}
 

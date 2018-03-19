@@ -16,16 +16,16 @@ public class ImageStreamConverter{
 	public static void main(String[] args){
 		//this is a stand-alone program to convert ImageStream images to FCS files
 		//need to decide which parameters get recorded
-		//the first arg is the file path, the second is the fcs filename, the third is the mask/trans channel number (consecutive)
+		//the first arg is the file path, the second is the fcs path, the third is the mask/trans channel number (consecutive)
 		LOCI_series_reader lsr=new LOCI_series_reader(args[0],false);
 		int nrows=lsr.nseries/2;
 		int maskch=Integer.parseInt(args[2])-1; int transch=maskch;
-		//int[] outchans={0,6};
 		ImagePlus imp1=(ImagePlus)lsr.getNextFrame();
 		ImagePlus imp2=(ImagePlus)lsr.getNextFrame();
 		int nch=imp1.getStackSize();
 		int[] outchans=new int[nch];
 		for(int i=0;i<nch;i++) outchans[i]=i; //by default get all of the channel parameters
+		//int[] outchans={0,6}; //this just gets the meos channels
 		String[] collabels=getColLabels(outchans);
 		//int ncols=collabels.length;
 		float[][] analysis=new float[nrows][];
@@ -62,15 +62,22 @@ public class ImageStreamConverter{
 	
 	public static Object[] analyzeImage(ImagePlus imp1,ImagePlus imp2,int maskch,int transch,int[] outchans,boolean backsub,float fillval,int maxdim,boolean noimages){
 		//produces a background subtracted (optional) multi-channel image of maxdim x maxdim dimension with the last channel being the mask
-		Object[] stack=jutils.stack2array(imp1.getStack());
+		Object[] stack1=jutils.stack2array(imp1.getStack());
 		int width=imp1.getWidth(); int height=imp1.getHeight();
+		Object[] stack=stack1;
+		if(outchans!=null) {
+			stack=new Object[outchans.length];
+			for(int i=0;i<outchans.length;i++) {
+				stack[i]=stack1[outchans[i]];
+			}
+		}
 		Object[] masks=jutils.stack2array(imp2.getStack());
 		findblobs3 fb=new findblobs3(width,height);
 		float[] object=fb.dofindblobs((byte[])masks[maskch]);
 		float[] back=new float[object.length];
 		for(int i=0;i<back.length;i++) if(object[i]==0.0f) back[i]=1.0f;
 		Polygon outline=fb.get_object_outline(object,1);
-		float[] grmsd=gradRMSD(stack[transch],outline,width,height); //5 params with area first
+		float[] grmsd=gradRMSD(stack1[transch],outline,width,height); //5 params with area first
 		float[] ellipse=ellipseParams(outline); //3 parameters with circ last
 		float[] params=(float[])algutils.combine_arrays(grmsd,ellipse);
 		float[] backs=new float[stack.length];
@@ -91,14 +98,13 @@ public class ImageStreamConverter{
 			temp[i*nstats+offset+4]=punctastats[i][0]; temp[i*nstats+offset+5]=punctastats[i][1]; temp[i*nstats+offset+6]=punctastats[i][2];
 		}
 		if(!noimages){
-			//this is the only place that outchans is used
 			float[][] images=new float[outchans.length+1][maxdim*maxdim];
 			float xshift=0.5f*(float)(maxdim-width);
 			float yshift=0.5f*(float)(maxdim-height);
 			for(int i=0;i<outchans.length;i++){
 				for(int j=0;j<maxdim*maxdim;j++) images[i][j]=fillval;
 				int selch=outchans[i];
-				float[] tempch=algutils.convert_arr_float(stack[selch]);
+				float[] tempch=algutils.convert_arr_float(stack1[selch]);
 				if(backsub) for(int j=0;j<tempch.length;j++) tempch[j]-=backs[selch];
 				interpolation.shift_copy_image(tempch,width,height,images[i],maxdim,maxdim,xshift,yshift);
 			}

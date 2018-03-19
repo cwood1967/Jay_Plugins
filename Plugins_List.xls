@@ -293,3 +293,14 @@ Plugins>Stowers>Jay_Unruh>Table Tools	duplicate table jru v1	duplicate_table_jru
 Plugins>Stowers>Jay_Unruh>Table Tools	filter table jru v2	filter_table_jru_v2	filters a table in a macro recordable fashion
 Plugins>Stowers>Jay_Unruh>Table Tools	new table jru v1	new_table_jru_v1	creates a new empty table with the specified number of columns and column labels
 Plugins>Stowers>Jay_Unruh>Table Tools	add table row jru v1	add_table_row_jru_v1	adds a row to a table
+Plugins>Stowers>Jay_Unruh>Misc Tools	get crypt xz profile jru v1	get_crypt_xz_profile_jru_v1	cryptic description of a plugin
+Plugins>Stowers>Jay_Unruh>Image Tools	separate all frames jru v1	separate_all_frames_jru_v1	"separates all of the frames of a hyperstack, naming them according to their slice labels"
+Plugins>Stowers>Jay_Unruh>Trajectory Tools	fit multi gaussian jru v4	fit_multi_gaussian_jru_v4	multigaussian trajectory fitting with an unlimited number of peaks and monte carlo error analysis
+Plugins>Stowers>Jay_Unruh>Trajectory Tools	copy plot custom jru v1	copy_plot_custom_jru_v1	copy's a custom combination of x and y values and errors from a plot
+Plugins>Stowers>Jay_Unruh>Image Tools	transmission 2 absorbance jru v1	transmission_2_absorbance_jru_v1	converts grayscale transmitted light images to absorbance (optical density).  Select a 100% transmission area before running.  Assumes that black is 0% transmission corresponding to the specified maximum OD.
+Plugins>Stowers>Jay_Unruh>File Tools	import jfcs jru v1	import_jfcs_jru_v1	"imports a jfcs file containing all of an fcs data set analysis (supports analysis autocorr v2 for now, will eventually add analysis crosscorr)"
+Plugins>Stowers>Jay_Unruh>Carpet Tools	find carpet max column jru v1	find_carpet_max_column_jru_v1	finds the maximum column for each row of a carpet
+Plugins>Stowers>Jay_Unruh>Segmentation Tools	realign movie z jru v1	realign_movie_z_jru_v1	realigns a movie in z according to a plot window trajectory (in slice units)
+Plugins>Stowers>Jay_Unruh>Batch Tools	batch plate analysis jru v1	batch_plate_analysis_jru_v1	runs a batch colony growth plate analysis on a folder--see plate analysis jru v1 for details
+Plugins>Stowers>Jay_Unruh>Table Tools	add row numbers jru v1	add_row_numbers_jru_v1	adds a row numbers column to a table
+Plugins>Stowers>Jay_Unruh>Table Tools	close all tables jru v1	close_all_tables_jru_v1	closes all currently open tables

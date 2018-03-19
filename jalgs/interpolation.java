@@ -23,6 +23,14 @@ public class interpolation{
 		return retimage;
 	}
 	
+	public static float[] shift_line(Object line,int width,float xoff) {
+		float[] retline=new float[width];
+		for(int i=0;i<width;i++) {
+			retline[i]=interp1D(line,width,(float)i-xoff);
+		}
+		return retline;
+	}
+	
 	public static float[] affine_transform(Object image,int width,int height,double[][] trans,int newwidth,int newheight){
 		//here we transform the coordinates of the new image back to the old image
 		float[] retimage=new float[newwidth*newheight];

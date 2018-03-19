@@ -12,14 +12,29 @@ public class fitpoly{
 	public linleastsquares lls; // linear least squares class used for the fit
 	public float[][] indvars;
 	public int npts;
+	
+	/*****************
+	 * here we assume that x starts at 0 and increases linearly
+	 * @param order
+	 * @param npts
+	 * @param fixoff
+	 */
+	public fitpoly(int order,int npts,boolean fixoff) {
+		float[] xvals=new float[npts];
+		for(int i=0;i<npts;i++) xvals[i]=(float)i;
+		init(order,xvals,fixoff);
+	}
 
-	/*
+	/**********
 	 * This class fits a set of data to a polynomial of order "order" Once the
 	 * object is constructed it can be used to fit any data with the same number
 	 * of data points and the same fit order
 	 */
-
 	public fitpoly(int order,float[] xvals,boolean fixoff){
+		init(order,xvals,fixoff);
+	}
+	
+	private void init(int order,float[] xvals,boolean fixoff) {
 		npts=xvals.length;
 		if(fixoff){
 			indvars=new float[order][npts];

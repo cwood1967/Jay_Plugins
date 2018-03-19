@@ -5,6 +5,10 @@ import jalgs.jstatistics;
 public class fit_kde_gaus{
 	
 	public static float get_kde_stdev(float[] data){
+		//this uses the scott (1992) method
+		//silverman used a leading factor of 0.9--narrower bandwidth
+		//assumes the data is normal and univariate
+		//will tend to over estimate the kernel bandwidth (thus oversmoothing the data)
 		float[] quartiles={75.0f,25.0f};
 		jstatistics.getstatistic("Percentile",data,quartiles);
 		float iqr=(float)Math.abs(quartiles[0]-quartiles[1]);

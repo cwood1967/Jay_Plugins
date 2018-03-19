@@ -324,7 +324,7 @@ public class PlotWindow4 extends ImageWindow implements ActionListener,Clipboard
 		// coordinates.setText("X="+temp[0]+", Y="+temp[1]);
 	}
 
-	void showList(){
+	public void showList(){
 		StringBuffer sb=new StringBuffer();
 		StringBuffer headings=new StringBuffer();
 		int tempnseries=p3.getNSeries();

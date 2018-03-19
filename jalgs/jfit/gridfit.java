@@ -11,6 +11,7 @@ package jalgs.jfit;
 public class gridfit{
 	NLLSfitinterface_v2 fitclass;
 	public boolean output;
+	public boolean escapePressed;
 
 	/*
 	 * This is a generic grid search fitting class Any calling class must either
@@ -39,6 +40,7 @@ public class gridfit{
 		int nparams=params.length;
 		int npts=data.length;
 		int fitparams=nparams;
+		escapePressed=false;
 		int[] fixes=new int[nparams];
 		if(fixes1!=null){
 			for(int i=0;i<nparams;i++){
@@ -85,6 +87,8 @@ public class gridfit{
 	public double search_param(int paramid,int numfit,double[] params,int[] fixes,double[][] constraints,float[] data,double[] weights){
 		// this method recursively searches over parameter space starting with paramid and returns the
 		// minimum parameter and chi squared
+		// should think about multithreaded implementation
+		// should think about premature breaks
 		if(paramid==(params.length-1)){
 			if(fixes[paramid]==1){
 				return calculate_c2_params(params,numfit,data,weights);
@@ -101,6 +105,7 @@ public class gridfit{
 							minc2=tempc2;
 						}
 					}
+					if(escapePressed) break;
 				}
 				params[paramid]=minparam;
 				return minc2;
@@ -143,6 +148,7 @@ public class gridfit{
 							fitclass.showresults(resstring.toString());
 						}
 					}
+					if(escapePressed) break;
 				}
 				System.arraycopy(minparams,0,params,0,params.length);
 				return minc2;

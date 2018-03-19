@@ -28,10 +28,12 @@ public class subtract_line_from_carpet_jru_v1 implements PlugIn {
 		GenericDialog gd = new GenericDialog("Options");
 		gd.addChoice("Plot Window",titles,titles[0]);
 		gd.addChoice("Carpet",titles,titles[0]);
+		gd.addCheckbox("Horizontal_Line",false);
 		gd.showDialog();
 		if(gd.wasCanceled()){return;}
 		int index1 = gd.getNextChoiceIndex();
 		int index2 = gd.getNextChoiceIndex();
+		boolean horizontal=gd.getNextBoolean();
 		ImagePlus imp = WindowManager.getImage(wList[index1]);
 		ImagePlus imp2 = WindowManager.getImage(wList[index2]);
 
@@ -43,17 +45,32 @@ public class subtract_line_from_carpet_jru_v1 implements PlugIn {
 		ImageStack stack=imp2.getStack();
 		int slices=stack.getSize();
 		ImageStack outstack=new ImageStack(width,length);
-		for(int k=0;k<slices;k++){
-			float[] subimage=new float[width*length];
-			float[] orig=jutils.convert_arr_float(stack.getPixels(k+1));
-			float[] line=yvals[0];
-			if(yvals.length>1) line=yvals[k];
-			for(int i=0;i<length;i++){
-				for(int j=0;j<width;j++){
-					subimage[j+i*width]=orig[j+i*width]-line[i];
+		if(!horizontal){
+			for(int k=0;k<slices;k++){
+				float[] subimage=new float[width*length];
+				float[] orig=jutils.convert_arr_float(stack.getPixels(k+1));
+				float[] line=yvals[0];
+				if(yvals.length>1) line=yvals[k];
+				for(int i=0;i<length;i++){
+					for(int j=0;j<width;j++){
+						subimage[j+i*width]=orig[j+i*width]-line[i];
+					}
 				}
+				outstack.addSlice("",subimage);
 			}
-			outstack.addSlice("",subimage);
+		} else {
+			for(int k=0;k<slices;k++){
+				float[] subimage=new float[width*length];
+				float[] orig=jutils.convert_arr_float(stack.getPixels(k+1));
+				float[] line=yvals[0];
+				if(yvals.length>1) line=yvals[k];
+				for(int i=0;i<length;i++){
+					for(int j=0;j<width;j++){
+						subimage[j+i*width]=orig[j+i*width]-line[j];
+					}
+				}
+				outstack.addSlice("",subimage);
+			}
 		}
 		(new ImagePlus("Subtracted",outstack)).show();
 	}

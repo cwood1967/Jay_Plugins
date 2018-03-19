@@ -34,6 +34,7 @@ public class plot_columns_jru_v1 implements PlugIn {
 		boolean haserrs=false;
 		gd.addCheckbox("Y Errs Column?",haserrs);
 		gd.addCheckbox("Sort by y val?",false);
+		gd.addCheckbox("Separate Values?",false);
 		gd.showDialog();
 		if(gd.wasCanceled()){return;}
 		int index=gd.getNextChoiceIndex();
@@ -41,6 +42,7 @@ public class plot_columns_jru_v1 implements PlugIn {
 		haszvals=gd.getNextBoolean();
 		haserrs=gd.getNextBoolean();
 		boolean sorty=gd.getNextBoolean();
+		boolean separate=gd.getNextBoolean();
 		if(niframes[index] instanceof TextWindow){
 			TextWindow tw=(TextWindow)niframes[index];
 			TextPanel tp=tw.getTextPanel();
@@ -81,6 +83,7 @@ public class plot_columns_jru_v1 implements PlugIn {
 				//String[] data=split_string_tab(tp.getLine(i));
 				String[] data=table_tools.split(tp.getLine(i),"\t",false);
 				if(data[yindex].length()<=0) continue;
+				for(int j=0;j<data.length;j++) if(!table_tools.is_number(data[j])) data[j]="NaN";
 				if(hasxvals) xvals[nlines2]=Float.parseFloat(data[xindex]);
 				else xvals[nlines2]=(float)i+1;
 				yvals[nlines2]=Float.parseFloat(data[yindex]);
@@ -105,12 +108,35 @@ public class plot_columns_jru_v1 implements PlugIn {
 					errs=temperrs;
 				}
 			}
-			if(!haszvals){
-				PlotWindow4 pw=new PlotWindow4(tw.getTitle()+" Plot",col_labels[xindex],col_labels[yindex],xvals,yvals);
-				if(haserrs) pw.addSeriesErrors(0,errs);
-				pw.draw();
-			}else{
-				new PlotWindow3D(tw.getTitle()+" Plot",new Traj3D(col_labels[xindex],col_labels[yindex],col_labels[zindex],xvals,yvals,zvals)).draw();
+			String xlab=col_labels[xindex]; String ylab=col_labels[yindex];
+			if(!hasxvals){xlab=ylab; ylab="Value";}
+			if(separate){
+				//in this case, each point becomes its own data set
+				float[][] newxvals=new float[xvals.length][1];
+				float[][] newyvals=new float[yvals.length][1];
+				float[][] newzvals=null; if(haszvals) newzvals=new float[zvals.length][1];
+				float[][] newerrs=null; if(haserrs) newerrs=new float[errs.length][1];
+				for(int i=0;i<xvals.length;i++){
+					newxvals[i][0]=xvals[i];
+					newyvals[i][0]=yvals[i];
+					if(haszvals) newzvals[i][0]=zvals[i];
+					if(haserrs) newerrs[i][0]=errs[i];
+				}
+				if(!haszvals){
+					PlotWindow4 pw=new PlotWindow4(tw.getTitle()+" Plot",xlab,ylab,newxvals,newyvals,null);
+					if(haserrs) pw.addErrors(newerrs);
+					pw.draw();
+				}else{
+					new PlotWindow3D(tw.getTitle()+" Plot",new Traj3D(xlab,ylab,col_labels[zindex],newxvals,newyvals,newzvals,null)).draw();
+				}
+			} else {
+				if(!haszvals){
+					PlotWindow4 pw=new PlotWindow4(tw.getTitle()+" Plot",xlab,ylab,xvals,yvals);
+					if(haserrs) pw.addSeriesErrors(0,errs);
+					pw.draw();
+				}else{
+					new PlotWindow3D(tw.getTitle()+" Plot",new Traj3D(xlab,ylab,col_labels[zindex],xvals,yvals,zvals)).draw();
+				}
 			}
 		} else {
 			IJ.showMessage("wrong window type");

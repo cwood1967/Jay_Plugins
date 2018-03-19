@@ -100,6 +100,15 @@ public class algutils{
 		return -1;
 	}
 	
+	public static int get_number_type(Number val) {
+		if(val instanceof Byte) return 0;
+		if(val instanceof Short) return 1;
+		if(val instanceof Float) return 2;
+		if(val instanceof Double) return 3;
+		if(val instanceof Integer) return 4;
+		return -1;
+	}
+	
 	/*********************************
 	 * this gets the length of an array of undefined type
 	 * @param arr
@@ -661,6 +670,19 @@ public class algutils{
 	 */
 	public static float[][] clone_multidim_array(float[][] arr){
 		float[][] temp=new float[arr.length][];
+		for(int i=0;i<arr.length;i++){
+			temp[i]=arr[i].clone();
+		}
+		return temp;
+	}
+	
+	/*******************
+	 * copies a 2D float array
+	 * @param arr
+	 * @return
+	 */
+	public static double[][] clone_multidim_array(double[][] arr){
+		double[][] temp=new double[arr.length][];
 		for(int i=0;i<arr.length;i++){
 			temp[i]=arr[i].clone();
 		}
@@ -1779,12 +1801,41 @@ public class algutils{
 						counter+=width;
 					}
 				}else{
-					int[] temp=convert_arr_int2(source);
-					int counter=col;
-					for(int i=0;i<height;i++){
-						((int[])dest)[counter]=temp[i];
-						counter+=width;
+					if(dest instanceof double[]) {
+    					double[] temp=convert_arr_double2(source);
+    					int counter=col;
+    					for(int i=0;i<height;i++){
+    						((double[])dest)[counter]=temp[i];
+    						counter+=width;
+    					}
+					} else {
+    					int[] temp=convert_arr_int2(source);
+    					int counter=col;
+    					for(int i=0;i<height;i++){
+    						((int[])dest)[counter]=temp[i];
+    						counter+=width;
+    					}
 					}
+				}
+			}
+		}
+	}
+	
+	public static void set_image_row(Object source,Object dest,int width,int height,int row){
+		if(dest instanceof float[]){
+			float[] temp=convert_arr_float2(source);
+			System.arraycopy(temp,0,(float[])dest,row*width,width);
+		}else{
+			if(dest instanceof short[]){
+				short[] temp=convert_arr_short2(source);
+				System.arraycopy(temp,0,(short[])dest,row*width,width);
+			}else{
+				if(dest instanceof byte[]){
+					byte[] temp=convert_arr_byte2(source);
+					System.arraycopy(temp,0,(byte[])dest,row*width,width);
+				}else{
+					int[] temp=convert_arr_int2(source);
+					System.arraycopy(temp,0,(int[])dest,row*width,width);
 				}
 			}
 		}
@@ -1836,11 +1887,13 @@ public class algutils{
 					((short[])source[i])[index]=((short[])col)[i];
 			}else{
 				if(source[0] instanceof byte[]){
-					for(int i=0;i<slices;i++)
-						((byte[])source[i])[index]=((byte[])col)[i];
+					for(int i=0;i<slices;i++) ((byte[])source[i])[index]=((byte[])col)[i];
 				}else{
-					for(int i=0;i<slices;i++)
-						((int[])source[i])[index]=((int[])col)[i];
+					if(source[0] instanceof double[]) {
+						for(int i=0;i<slices;i++) ((double[])source[i])[index]=((double[])col)[i];
+					} else {
+    					for(int i=0;i<slices;i++) ((int[])source[i])[index]=((int[])col)[i];
+					}
 				}
 			}
 		}

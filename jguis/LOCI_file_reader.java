@@ -277,13 +277,14 @@ public class LOCI_file_reader{
 					luts2=null;
 					break;
 				}
+				//here assuming luts is a byte or a short
 				if(luts[i] instanceof byte[][]){
 					luts2[i]=new LUT(((byte[][])luts[i])[0],((byte[][])luts[i])[1],((byte[][])luts[i])[2]);
 				} else {
 					byte[][] temp=new byte[3][];
-					temp[0]=algutils.convert_arr_byte2(((byte[][])luts[i])[0]);
-					temp[1]=algutils.convert_arr_byte2(((byte[][])luts[i])[1]);
-					temp[2]=algutils.convert_arr_byte2(((byte[][])luts[i])[2]);
+					temp[0]=algutils.convert_arr_byte(((Object[])luts[i])[0]);
+					temp[1]=algutils.convert_arr_byte(((Object[])luts[i])[1]);
+					temp[2]=algutils.convert_arr_byte(((Object[])luts[i])[2]);
 					luts2[i]=new LUT(temp[0],temp[1],temp[2]);
 				}
 			}

@@ -462,10 +462,14 @@ public class table_tools{
 	}
 	
 	public static List<List<String>> get_cell_stat_list(List<List<String>> list,int cellcolumn,String stat,boolean addct){
+		return get_cell_stat_list(list,cellcolumn,stat,false,null);
+	}
+	
+	public static List<List<String>> get_cell_stat_list(List<List<String>> list,int cellcolumn,String stat,boolean addct,float[] options){
 		List<String> celllist=get_cell_list(list,cellcolumn);
 		List<List<String>> rettable=new ArrayList<List<String>>();
 		for(int i=0;i<celllist.size();i++){
-			List<String> cellstat=get_cell_stat(list,cellcolumn,celllist.get(i),stat,addct);
+			List<String> cellstat=get_cell_stat(list,cellcolumn,celllist.get(i),stat,addct,options);
 			rettable.add(cellstat);
 		}
 		return rettable;
@@ -577,8 +581,12 @@ public class table_tools{
 	}
 	
 	public static List<String> get_cell_stat(List<List<String>> list,int cellcolumn,String cellid,String stat,boolean addct){
+		return get_cell_stat(list,cellcolumn,cellid,stat,false,null);
+	}
+	
+	public static List<String> get_cell_stat(List<List<String>> list,int cellcolumn,String cellid,String stat,boolean addct,float[] options){
 		List<List<String>> celltable=get_cell_listtable(list,cellcolumn,cellid);
-		List<String> stats=table_tools.get_table_stat(celltable,stat);
+		List<String> stats=table_tools.get_table_stat(celltable,stat,options);
 		stats.set(cellcolumn,cellid);
 		if(addct) stats.add(""+celltable.size());
 		return stats;
@@ -751,9 +759,12 @@ public class table_tools{
 	}
 
 	public static void create_table(String title,List<List<String>> list,String[] collabels){
-		int ncolumns=list.get(0).size();
+		int ncolumns=0;
+		if(list.size()>0) ncolumns=list.get(0).size();
+		if(ncolumns==0 && collabels!=null) ncolumns=collabels.length; //blank table
 		String[] labels=collabels;
 		if(collabels==null){
+			if(ncolumns==0) return; //empty file
 			labels=new String[ncolumns];
 			for(int i=0;i<ncolumns;i++)
 				labels[i]="col"+(i+1);

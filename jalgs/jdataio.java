@@ -264,6 +264,31 @@ public class jdataio{
 		}
 		return true;
 	}
+	
+	public boolean writeintellong(OutputStream outstream,long data) {
+		try{
+			byte[] dumbyte=new byte[8];
+			dumbyte[0]=(byte)data;
+			dumbyte[1]=(byte)(data>>8);
+			dumbyte[2]=(byte)(data>>16);
+			dumbyte[3]=(byte)(data>>24);
+			dumbyte[4]=(byte)(data>>32);
+			dumbyte[5]=(byte)(data>>40);
+			dumbyte[6]=(byte)(data>>48);
+			dumbyte[7]=(byte)(data>>56);
+			outstream.write(dumbyte[0]);
+			outstream.write(dumbyte[1]);
+			outstream.write(dumbyte[2]);
+			outstream.write(dumbyte[3]);
+			outstream.write(dumbyte[4]);
+			outstream.write(dumbyte[5]);
+			outstream.write(dumbyte[6]);
+			outstream.write(dumbyte[7]);
+		}catch(IOException e){
+			return false;
+		}
+		return true;
+	}
 
 	public boolean writeintelshort(OutputStream outstream,short data){
 		try{
@@ -280,6 +305,10 @@ public class jdataio{
 
 	public boolean writeintelfloat(OutputStream outstream,float data){
 		return writeintelint(outstream,Float.floatToIntBits(data));
+	}
+	
+	public boolean writeinteldouble(OutputStream outstream,double data) {
+		return writeintellong(outstream,Double.doubleToLongBits(data));
 	}
 
 	public boolean writeintelintarray(OutputStream outstream,int[] data){

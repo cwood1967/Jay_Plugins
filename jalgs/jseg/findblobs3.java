@@ -1110,6 +1110,12 @@ public class findblobs3 implements Runnable{
 		}
 	}
 
+	/*****************
+	 * here we filter for area and circularity
+	 * @param objects: the indexed objects image
+	 * @param outlines: the object outlines
+	 * @param limits: minarea,maxarea,mincirc,maxcirc
+	 */
 	public void filter_area_circ(float[] objects,Polygon[] outlines,float[] limits){
 		int minarea=(int)limits[0];
 		int maxarea=(int)limits[1];

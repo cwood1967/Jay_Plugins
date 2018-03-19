@@ -20,6 +20,7 @@ import ij.gui.PlotWindow;
 import ij.gui.Roi;
 import ij.measure.Calibration;
 import ij.plugin.filter.BackgroundSubtracter;
+import ij.plugin.filter.GaussianBlur;
 import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
 import ij.process.FloatProcessor;
@@ -2122,6 +2123,14 @@ public class jutils{
 		imp.updateAndDraw();
 	}
 	
+	/*************
+	 * this is a simple implementation of the ImageJ rolling ball background subtraction
+	 * @param image
+	 * @param ballrad
+	 * @param width
+	 * @param height
+	 * @return
+	 */
 	public static float[] sub_roll_ball_back(float[] image,float ballrad,int width,int height){
 		FloatProcessor fp2=new FloatProcessor(width,height,image.clone(),null);
 		fp2.snapshot();
@@ -2130,12 +2139,26 @@ public class jutils{
 		return (float[])fp2.getPixels();
 	}
 	
+	/************
+	 * does rolling ball for stacks
+	 * @param stack
+	 * @param ballrad
+	 * @param width
+	 * @param height
+	 * @return
+	 */
 	public static float[][] sub_roll_ball_back(Object[] stack,float ballrad,int width,int height){
 		float[][] retstack=new float[stack.length][];
 		for(int i=0;i<stack.length;i++){
 			retstack[i]=sub_roll_ball_back(algutils.convert_arr_float(stack[i]),ballrad,width,height);
 		}
 		return retstack;
+	}
+	
+	public static float[] gaussian_blur(float[] image,float blurstdev,int width,int height) {
+		FloatProcessor fp=new FloatProcessor(width,height,image.clone(),null);
+		(new GaussianBlur()).blurFloat(fp,blurstdev,blurstdev,0.0002);
+		return (float[])fp.getPixels();
 	}
 	
 	public static void load_plugins_list(){

@@ -174,6 +174,18 @@ public class jstatistics{
 		}
 	}
 	
+	public static float getstatistic(String stat,Object data,int start,int length,float[] extras){
+		if(data instanceof float[]){
+			return getstat(stat,(float[])algutils.get_subarray(data,start,length),extras);
+		}else if(data instanceof short[]){
+			return getstat(stat,(short[])algutils.get_subarray(data,start,length),extras);
+		}else if(data instanceof byte[]){
+			return getstat(stat,(byte[])algutils.get_subarray(data,start,length),extras);
+		}else{
+			return getstat(stat,(int[])algutils.get_subarray(data,start,length),extras);
+		}
+	}
+	
 	public static float[] getspectrum(String stat,Object[] data,float[] extras){
 		float[] spectrum=new float[data.length];
 		for(int i=0;i<data.length;i++){
@@ -484,13 +496,16 @@ public class jstatistics{
 
 	public static float favg(float[] data){
 		double tempavg=0.0;
+		int len=0;
 		for(int i=0;i<data.length;i++){
 			if(!Float.isInfinite(data[i])){
 				if(!Float.isNaN(data[i])){
-					tempavg+=(double)data[i]/(double)(data.length);
+					tempavg+=(double)data[i];
+					len++;
 				}
 			}
 		}
+		tempavg/=(double)len;
 		return (float)tempavg;
 	}
 
