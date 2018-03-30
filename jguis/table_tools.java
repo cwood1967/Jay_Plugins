@@ -676,6 +676,16 @@ public class table_tools{
 			row.add(pos2,column[i]);
 		}
 	}
+	
+	public static void add_listtable_column(List<List<String>> list,float[] column,int pos){
+		for(int i=0;i<list.size();i++){
+			List<String> row=list.get(i);
+			int pos2=pos;
+			if(pos2>row.size())
+				pos2=row.size();
+			row.add(pos2,""+column[i]);
+		}
+	}
 
 	public static void delete_listtable_column(List<List<String>> list,int delcolumn){
 		for(int i=0;i<list.size();i++){

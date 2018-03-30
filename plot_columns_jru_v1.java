@@ -28,11 +28,11 @@ public class plot_columns_jru_v1 implements PlugIn {
 		GenericDialog gd=new GenericDialog("Windows");
 		gd.addChoice("Windows",titles,titles[0]);
 		boolean hasxvals=false;
-		gd.addCheckbox("X Vals Column?",hasxvals);
+		gd.addCheckbox("X_Vals Column?",hasxvals);
 		boolean haszvals=false;
-		gd.addCheckbox("Z Vals Column?",haszvals);
+		gd.addCheckbox("Z_Vals Column?",haszvals);
 		boolean haserrs=false;
-		gd.addCheckbox("Y Errs Column?",haserrs);
+		gd.addCheckbox("Y_Errs Column?",haserrs);
 		gd.addCheckbox("Sort by y val?",false);
 		gd.addCheckbox("Separate Values?",false);
 		gd.showDialog();
@@ -50,14 +50,14 @@ public class plot_columns_jru_v1 implements PlugIn {
 			String[] col_labels=split_string_tab(headings);
 			GenericDialog gd2=new GenericDialog("Choose Columns");
 			if(hasxvals){
-				gd2.addChoice("X Column",col_labels,col_labels[0]);
+				gd2.addChoice("X_Column",col_labels,col_labels[0]);
 			}
-			gd2.addChoice("Y Column",col_labels,col_labels[0]);
+			gd2.addChoice("Y_Column",col_labels,col_labels[0]);
 			if(haszvals){
-				gd2.addChoice("Z Column",col_labels,col_labels[0]);
+				gd2.addChoice("Z_Column",col_labels,col_labels[0]);
 			}
 			if(haserrs){
-				gd2.addChoice("Y Errs Column",col_labels,col_labels[0]);
+				gd2.addChoice("Y_Errs_Column",col_labels,col_labels[0]);
 			}
 			gd2.showDialog(); if(gd2.wasCanceled()){return;}
 			int xindex=0;

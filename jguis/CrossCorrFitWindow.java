@@ -11,12 +11,19 @@ package jguis;
 import ij.IJ;
 import ij.gui.GenericDialog;
 import ij.io.SaveDialog;
+import ij.text.TextWindow;
 import jalgs.jdataio;
 import jalgs.jdist;
+import jalgs.jstatistics;
 import jalgs.jfit.NLLSfit;
+import jalgs.jfit.NLLSfit_v2;
 import jalgs.jfit.NLLSfitinterface;
+import jalgs.jfit.NLLSfitinterface_v2;
 import jalgs.jfit.NLLSglobalfit;
+import jalgs.jfit.NLLSglobalfit_v2;
+import jalgs.jfit.monte_carlo_errors_v2;
 import jalgs.jfit.support_plane_errors;
+import jalgs.jfit.support_plane_errors_v2;
 
 import java.awt.Button;
 import java.awt.Component;
@@ -44,13 +51,13 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 
-public class CrossCorrFitWindow extends Panel implements ActionListener,NLLSfitinterface,ListSelectionListener,TableModelListener{
+public class CrossCorrFitWindow extends Panel implements ActionListener,NLLSfitinterface_v2,ListSelectionListener,TableModelListener{
 
 	public final static int H=750;
 	public final static int WR=800;
 	public Dimension totalSize=new Dimension();
 
-	private Button fitavgbutton,fitglobalbutton,clearparamsbutton,undobutton,geterrorsbutton,savebutton;
+	private Button fitavgbutton,fitglobalbutton,clearparamsbutton,undobutton,geterrorsbutton,savebutton,montecarlobutton;
 	private Button editconsbutton;
 	private PlotWindow4 pwavg,pwfit,pwavgtraj,pwfittraj;
 	private int ncurves,nparams,npts,dispcurve,psfflag;
@@ -67,7 +74,7 @@ public class CrossCorrFitWindow extends Panel implements ActionListener,NLLSfiti
 	private double[][][] globalconstraints;
 	private double[] avgparams;
 	private double globalc2,beta,undoglobalc2,khz;
-	private boolean checkc2,brightcorr;
+	private boolean checkc2,brightcorr,outerrors;
 	private int[][] globalvflmatrix,undovflmatrix;
 	private int[] avgfixes;
 	private int[] fitplotcolors;
@@ -75,8 +82,9 @@ public class CrossCorrFitWindow extends Panel implements ActionListener,NLLSfiti
 	private String[][] globalformulas,undoformulas;
 	private String[] paramsnames;
 	public double w0g,w0r;
-	NLLSglobalfit globalfitclass;
-	NLLSfit fitclass;
+	private TextWindow tw;
+	NLLSglobalfit_v2 globalfitclass;
+	NLLSfit_v2 fitclass;
 
 	public static void launch_frame(CrossCorrFitWindow panel){
 		final Frame f=new Frame("Cross Corr Analysis");
@@ -352,8 +360,8 @@ public class CrossCorrFitWindow extends Panel implements ActionListener,NLLSfiti
 
 		checkc2=false;
 
-		fitclass=new NLLSfit(this,0.0001,50,0.1);
-		globalfitclass=new NLLSglobalfit(this,0.0001,50,0.1);
+		fitclass=new NLLSfit_v2(this,0.0001,50,0.1);
+		globalfitclass=new NLLSglobalfit_v2(this,0.0001,50,0.1);
 		avgfit=new float[3][npts];
 		fit=new float[ncurves][3][npts];
 
@@ -397,8 +405,13 @@ public class CrossCorrFitWindow extends Panel implements ActionListener,NLLSfiti
 		geterrorsbutton.addActionListener(this);
 		add(geterrorsbutton);
 		
+		montecarlobutton=new Button("Monte Carlo");
+		montecarlobutton.setBounds(buttonsx,starty-25+50+50+50+30+30+50+50+50+50+50,100,40);
+		montecarlobutton.addActionListener(this);
+		add(montecarlobutton);
+		
 		savebutton=new Button("Save Analysis");
-		savebutton.setBounds(buttonsx,starty-25+50+50+50+30+30+50+50+50+50+50,100,40);
+		savebutton.setBounds(buttonsx,starty-25+50+50+50+30+30+50+50+50+50+50+50,100,40);
 		savebutton.addActionListener(this);
 		add(savebutton);
 
@@ -518,6 +531,9 @@ public class CrossCorrFitWindow extends Panel implements ActionListener,NLLSfiti
 		}
 		if(e.getSource()==savebutton){
 			savefile();
+		}
+		if(e.getSource()==montecarlobutton){
+			montecarlo();
 		}
 	}
 
@@ -1158,7 +1174,7 @@ public class CrossCorrFitWindow extends Panel implements ActionListener,NLLSfiti
 		dataset=(int)gd.getNextNumber();
 
 		if(globalerror){
-			support_plane_errors erclass=new support_plane_errors(this,0.0001,50,true,0.1);
+			support_plane_errors_v2 erclass=new support_plane_errors_v2(this,0.0001,50,true,0.1);
 			int[] erindeces={paramindex,dataset};
 			// need to set up all the matrices
 			int nsel=0;
@@ -1217,7 +1233,7 @@ public class CrossCorrFitWindow extends Panel implements ActionListener,NLLSfiti
 			}
 			new PlotWindow4("c2 plot",paramsnames[paramindex]+"["+dataset+"]","Chi^2",c2plotf[0],c2plotf[1]).draw();
 		}else{
-			support_plane_errors erclass=new support_plane_errors(this,0.0001,50,false,0.1);
+			support_plane_errors_v2 erclass=new support_plane_errors_v2(this,0.0001,50,false,0.1);
 			int errindex=paramindex;
 
 			float[] tempdata=new float[npts*3];
@@ -1252,6 +1268,56 @@ public class CrossCorrFitWindow extends Panel implements ActionListener,NLLSfiti
 			}
 			new PlotWindow4("c2 plot",paramsnames[errindex],"Chi^2",c2plotf[0],c2plotf[1]).draw();
 		}
+	}
+	
+	private void montecarlo(){
+		GenericDialog gd=new GenericDialog("Options");
+		gd.addNumericField("#_of_trials",500,0);
+		gd.showDialog();
+		if(gd.wasCanceled()){
+			return;
+		}
+		int ntrials=(int)gd.getNextNumber();
+		float[] tempdata=new float[3*npts];
+		// float[] tempweights=new float[3*npts];
+		for(int i=0;i<3;i++){
+			for(int j=0;j<npts;j++){
+				tempdata[i*npts+j]=avg[i][j];
+			}
+		}
+		monte_carlo_errors_v2 mc=new monte_carlo_errors_v2(this,0.0001,50,false,0.1);
+		outerrors=true;
+		float[] weights=null;
+		boolean useweights=false;
+		/*if(useweights&&ninclude>1){
+			weights=new float[npts];
+			for(int j=0;j<npts;j++){
+				weights[j]=1.0f/(errs[j]*errs[j]);
+			}
+		}*/
+		StringBuffer sb=new StringBuffer();
+		sb.append("Trial\t");
+		for(int i=0;i<paramsnames.length;i++){
+			if(avgfixes[i]==0)
+				sb.append(paramsnames[i]+"\t");
+		}
+		sb.append("chi^2");
+		tw=new TextWindow("Monte Carlo Results",sb.toString(),"",400,400);
+		outerrors=true;
+		double[][] errors=mc.geterrors(avgparams,avgfixes,avgconstraints,tempdata,weights,ntrials);
+		sb=new StringBuffer();
+		sb.append("StDev\t");
+		for(int i=0;i<errors.length;i++){
+			float[] ferr=new float[errors[0].length];
+			for(int j=0;j<ferr.length;j++)
+				ferr[j]=(float)errors[i][j];
+			float stdev=jstatistics.getstatistic("StDev",ferr,null);
+			sb.append(""+stdev);
+			if(i<(errors.length-1))
+				sb.append("\t");
+		}
+		tw.append(sb.toString());
+		outerrors=false;
 	}
 
 	private void getintbright(){
@@ -1368,49 +1434,53 @@ public class CrossCorrFitWindow extends Panel implements ActionListener,NLLSfiti
 		}
 	}
 
-	public double fitfunc(double[] params,int indvar){
+	public double[] fitfunc(double[] params){
 		// params are
 		// r,baselineg,G01g,td1g,G02g,td2g,ftripg,ttripg,baseliner,G01r,td1r,G02r,td2r,ftripr,ttripr,baselinecc,G01cc,td1cc,G02cc,td2cc,ftripcc,ttripcc;
-		int curveindex=(int)((double)indvar/(double)(3*npts));
-		int remvar=indvar-curveindex*3*npts;
-		int acindex=(int)((double)remvar/(double)(npts));
-		remvar-=npts*acindex;
-		double t_td1=xvals[0][0][remvar]/(params[acindex*7+3]/1000.0);
-		double t_td2=xvals[0][0][remvar]/(params[acindex*7+5]/1000.0);
-		double factor=1.0/(params[0]*params[0]);
-		double temp1=1.0/(1.0+t_td1);
-		boolean scanning=(psfflag==3);
-		if(scanning) psfflag=0;
-		if(psfflag==2)
-			temp1=Math.sqrt(temp1);
-		double temp2=0.0;
-		if(params[acindex*7+4]!=0.0){
-			temp2=1.0/(1.0+t_td2);
-			if(psfflag==2)
-				temp2=Math.sqrt(temp2);
+		double[] fit=new double[3*npts];
+		for(int i=0;i<3*npts;i++) {
+    		int curveindex=(int)((double)i/(double)(3*npts));
+    		int remvar=i-curveindex*3*npts;
+    		int acindex=(int)((double)remvar/(double)(npts));
+    		remvar-=npts*acindex;
+    		double t_td1=xvals[0][0][remvar]/(params[acindex*7+3]/1000.0);
+    		double t_td2=xvals[0][0][remvar]/(params[acindex*7+5]/1000.0);
+    		double factor=1.0/(params[0]*params[0]);
+    		double temp1=1.0/(1.0+t_td1);
+    		boolean scanning=(psfflag==3);
+    		if(scanning) psfflag=0;
+    		if(psfflag==2)
+    			temp1=Math.sqrt(temp1);
+    		double temp2=0.0;
+    		if(params[acindex*7+4]!=0.0){
+    			temp2=1.0/(1.0+t_td2);
+    			if(psfflag==2)
+    				temp2=Math.sqrt(temp2);
+    		}
+    		if(psfflag!=1){
+    			temp1*=1.0/Math.sqrt(1.0+factor*t_td1);
+    			if(params[acindex*7+4]!=0.0){
+    				temp2*=1.0/Math.sqrt(1.0+factor*t_td2);
+    			}
+    		}
+    		if(scanning){
+    			psfflag=3;
+    			float tpix=xvals[0][0][1]-xvals[0][0][0]; //assume the x axis is linear along the time coordinate
+    			float x=xvals[0][0][remvar]/tpix;
+    			if(w0g==0.0) w0g=5.0; if(w0r==0.0) w0r=w0g*1.16; //this assumes 40 nm pixels and diffraction limited
+    			float w0=(float)w0g;
+    			if(curveindex==1) w0=(float)w0r;
+    			if(curveindex==2) w0=(float)Math.sqrt(w0g*w0g+w0r*w0r);
+    			temp1*=sfcs(x,w0,(float)t_td1);
+    			temp2*=sfcs(x,w0,(float)t_td2);
+    		}
+    		double temp3=0.0;
+    		if(params[acindex*7+6]!=0.0){
+    			temp3=params[acindex*7+6]*Math.exp(-(double)xvals[0][0][remvar]/(params[acindex*7+7]/1000000.0));
+    		}
+    		fit[i]= params[acindex*7+1]+(params[acindex*7+2]*temp1+params[acindex*7+4]*temp2)*(1.0+temp3);
 		}
-		if(psfflag!=1){
-			temp1*=1.0/Math.sqrt(1.0+factor*t_td1);
-			if(params[acindex*7+4]!=0.0){
-				temp2*=1.0/Math.sqrt(1.0+factor*t_td2);
-			}
-		}
-		if(scanning){
-			psfflag=3;
-			float tpix=xvals[0][0][1]-xvals[0][0][0]; //assume the x axis is linear along the time coordinate
-			float x=xvals[0][0][remvar]/tpix;
-			if(w0g==0.0) w0g=5.0; if(w0r==0.0) w0r=w0g*1.16; //this assumes 40 nm pixels and diffraction limited
-			float w0=(float)w0g;
-			if(curveindex==1) w0=(float)w0r;
-			if(curveindex==2) w0=(float)Math.sqrt(w0g*w0g+w0r*w0r);
-			temp1*=sfcs(x,w0,(float)t_td1);
-			temp2*=sfcs(x,w0,(float)t_td2);
-		}
-		double temp3=0.0;
-		if(params[acindex*7+6]!=0.0){
-			temp3=params[acindex*7+6]*Math.exp(-(double)xvals[0][0][remvar]/(params[acindex*7+7]/1000000.0));
-		}
-		return params[acindex*7+1]+(params[acindex*7+2]*temp1+params[acindex*7+4]*temp2)*(1.0+temp3);
+		return fit;
 	}
 	
 	public double sfcs(float x,float w0,float t_td){
@@ -1419,7 +1489,10 @@ public class CrossCorrFitWindow extends Panel implements ActionListener,NLLSfiti
 	}
 
 	public void showresults(String results){
-		IJ.log(results);
+		if(!outerrors)
+			IJ.log(results);
+		else
+			tw.append(results);
 	}
 
 }

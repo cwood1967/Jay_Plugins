@@ -304,3 +304,11 @@ Plugins>Stowers>Jay_Unruh>Segmentation Tools	realign movie z jru v1	realign_movi
 Plugins>Stowers>Jay_Unruh>Batch Tools	batch plate analysis jru v1	batch_plate_analysis_jru_v1	runs a batch colony growth plate analysis on a folder--see plate analysis jru v1 for details
 Plugins>Stowers>Jay_Unruh>Table Tools	add row numbers jru v1	add_row_numbers_jru_v1	adds a row numbers column to a table
 Plugins>Stowers>Jay_Unruh>Table Tools	close all tables jru v1	close_all_tables_jru_v1	closes all currently open tables
+Plugins>Stowers>Jay_Unruh>Table Tools	edit column labels jru v1	edit_column_labels_jru_v1	edit table column labels
+Plugins>Stowers>Jay_Unruh>Misc Tools	hist 2D 2 1D gated jru v1	hist_2D_2_1D_gated_jru_v1	use an roi to create a 1D histogram from a 2D histogram
+Plugins>Stowers>Jay_Unruh>Binding Analysis	fit stretched exp jru v1	fit_stretched_exp_jru_v1	fits a plot to a stretched exponential
+Plugins>Stowers>Jay_Unruh>Misc Tools	generate hist image gate jru v1	generate_hist_image_gate_jru_v1	generates a gate from a 2D histogram image for flow cytometry histogram analysis
+Plugins>Stowers>Jay_Unruh>Misc Tools	get hist image jru v1	get_hist_image_jru_v1	gets a floating point density image correponding to a histogram
+Plugins>Stowers>Jay_Unruh>Segmentation Tools	fill roi float jru v1	fill_roi_float_jru_v1	fills an roi on a 32 bit image with a floating point number
+Plugins>Stowers>Jay_Unruh>Image Tools	dilate color jru v1	dilate_color_jru_v1	dilates a color image: each black pixel neighboring a colored pixel is set to that color
+Plugins>Stowers>Jay_Unruh>Misc Tools	pair correlation function jru v1	pair_correlation_function_jru_v1	does a pair autocorrelation function on a 2D or 3D point or trajectory data set
