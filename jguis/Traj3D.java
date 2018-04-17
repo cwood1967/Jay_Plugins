@@ -129,19 +129,17 @@ public class Traj3D extends Plot3D{
 			npts[i]=points.get(i).size();
 			if(npts[i]>maxxpts) maxxpts=npts[i];
 		}
-		float[][] xvals=new float[npts.length][maxxpts];
-		float[][] yvals=new float[npts.length][maxxpts];
-		float[][] zvals=new float[npts.length][maxxpts];
+		nseries=npts.length;
+		xValues=new float[npts.length][maxxpts];
+		yValues=new float[npts.length][maxxpts];
+		zValues=new float[npts.length][maxxpts];
 		for(int i=0;i<points.size();i++){
 			List<float[]> series=points.get(i);
 			for(int j=0;j<series.size();j++){
 				float[] coords=series.get(j);
-				xvals[i][j]=coords[0]; yvals[i][j]=coords[1]; zvals[i][j]=coords[2];
+				xValues[i][j]=coords[0]; yValues[i][j]=coords[1]; zValues[i][j]=coords[2];
 			}
 		}
-		xValues=xvals;
-		yValues=yvals;
-		zValues=zvals;
 		xLabel=xLabel1;
 		yLabel=yLabel1;
 		zLabel=zLabel1;

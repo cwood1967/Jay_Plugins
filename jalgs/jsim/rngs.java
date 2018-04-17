@@ -182,6 +182,14 @@ public class rngs{
 		}
 		return temp;
 	}
+	
+	public double[] random_sphere(double radius) {
+		double[] vec = random_3D_vector();
+    	vec[0]*=radius;
+    	vec[1]*=radius;
+    	vec[2]*=radius;
+    	return vec;
+	}
 
 	public double[] random_3D_vector(){
 		double[] temp={unidev(1.0,-1.0),unidev(1.0,-1.0),unidev(1.0,-1.0)};

@@ -312,3 +312,5 @@ Plugins>Stowers>Jay_Unruh>Misc Tools	get hist image jru v1	get_hist_image_jru_v1
 Plugins>Stowers>Jay_Unruh>Segmentation Tools	fill roi float jru v1	fill_roi_float_jru_v1	fills an roi on a 32 bit image with a floating point number
 Plugins>Stowers>Jay_Unruh>Image Tools	dilate color jru v1	dilate_color_jru_v1	dilates a color image: each black pixel neighboring a colored pixel is set to that color
 Plugins>Stowers>Jay_Unruh>Misc Tools	pair correlation function jru v1	pair_correlation_function_jru_v1	does a pair autocorrelation function on a 2D or 3D point or trajectory data set
+Plugins>Stowers>Jay_Unruh>Misc Tools	get crypt xz profile jru v2	get_crypt_xz_profile_jru_v2	cryptic description of a plugin
+Plugins>Stowers>Jay_Unruh>Sim Tools	simulate npcs jru v1	simulate_npcs_jru_v1	simulates randomly distributed diffraction limited points on the surface of a sphere

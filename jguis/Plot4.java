@@ -529,6 +529,70 @@ public class Plot4{
 		float[] temp={tempxmin,tempymax};
 		return temp;
 	}
+	
+	/*****************
+	 * this resets values like logxmin, logymin without drawing the plot (normally where these would be set)
+	 */
+	public void resetInternalScales() {
+		float ymag=magnification*magratio/((float)HEIGHT/(float)WIDTH);
+		int newwidth=(int)(magnification*WIDTH);
+		int newheight=(int)(ymag*HEIGHT);
+		//we can assume that the logy limits and all scales have been updated recently
+		logxmin=0;
+		logymin=0;
+		logxscale=0;
+		logyscale=0;
+		logxmax=0;
+		logymax=0;
+		if(logx){
+			if(xMin<=0.0f){
+				logxmin=(float)Math.log(findmingt0(xValues,npts,xMax));
+			}else{
+				logxmin=(float)Math.log(xMin);
+			}
+			logxmax=(float)Math.log(xMax);
+			logxscale=newwidth/(logxmax-logxmin);
+		}
+		if(logy){
+			if(yMin<=0.0f){
+				logymin=(float)Math.log(findmingt0(yValues,npts,yMax));
+			}else{
+				logymin=(float)Math.log(yMin);
+			}
+			logymax=(float)Math.log(yMax);
+			logyscale=newheight/(logymax-logymin);
+		}
+		xScale=newwidth/(xMax-xMin);
+		yScale=newheight/(yMax-yMin);
+	}
+	
+	/*************
+	 * this returns the pixel position on the plot image for the indicated coordinates, must draw plot (or resetInternalScales before doing this
+	 * @param xpos
+	 * @param ypos
+	 * @return
+	 */
+	public int[] getCoordsPosition(float xpos,float ypos) {
+		float ymag=magnification*magratio/((float)HEIGHT/(float)WIDTH);
+		int newleftmargin=(int)(magnification*LEFT_MARGIN);
+		int newtopmargin=(int)(ymag*TOP_MARGIN);
+		int newheight=(int)(ymag*HEIGHT);
+		int xpos2=newleftmargin+(int)((xpos-xMin)*xScale);
+		int ypos2=newtopmargin+newheight-(int)((ypos-yMin)*yScale);
+		if(logx) {
+			float xtemp;
+			if(xpos>0.0f) xtemp=(float)Math.log(xpos);
+			else xtemp=logxmin;
+			xpos2=newleftmargin+(int)((xtemp-logxmin)*logxscale);
+		}
+		if(logy) {
+			float ytemp;
+			if(ypos>0.0f) ytemp=(float)Math.log(ypos);
+			else ytemp=logymin;
+			ypos2=newtopmargin+newheight-(int)((ytemp-logymin)*logyscale);
+		}
+		return new int[]{xpos2,ypos2};
+	}
 
 	public Calibration getCalibration(){
 		Calibration cal=new Calibration();
