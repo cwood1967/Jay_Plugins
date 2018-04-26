@@ -95,7 +95,8 @@ public class jdataio{
 	}
 
 	public String[] get_sorted_string_list(String directory,String mask){
-		return get_sorted_string_list(directory,new String[]{mask},null);
+		if(mask!=null) return get_sorted_string_list(directory,new String[]{mask},null);
+		else return get_sorted_string_list(directory,null,null);
 	}
 
 	public String[] get_datemod_sorted_string_list(String directory,String mask){
@@ -131,6 +132,10 @@ public class jdataio{
 		//this is the master masking method
 		String[] names=(new File(directory)).list();
 		ArrayList<String> namelist=new ArrayList<String>();
+		if(masks==null && notmasks==null) {
+			for(int i=0;i<names.length;i++) namelist.add(names[i]);
+			return namelist;
+		}
 		int nmask=0;
 		for(int i=0;i<names.length;i++){
 			boolean invalidated=false;

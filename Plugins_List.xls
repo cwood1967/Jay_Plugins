@@ -314,3 +314,7 @@ Plugins>Stowers>Jay_Unruh>Image Tools	dilate color jru v1	dilate_color_jru_v1	di
 Plugins>Stowers>Jay_Unruh>Misc Tools	pair correlation function jru v1	pair_correlation_function_jru_v1	does a pair autocorrelation function on a 2D or 3D point or trajectory data set
 Plugins>Stowers>Jay_Unruh>Misc Tools	get crypt xz profile jru v2	get_crypt_xz_profile_jru_v2	cryptic description of a plugin
 Plugins>Stowers>Jay_Unruh>Sim Tools	simulate npcs jru v1	simulate_npcs_jru_v1	simulates randomly distributed diffraction limited points on the surface of a sphere
+Plugins>Stowers>Jay_Unruh>File Tools	get imaris dataset jru v1	get_imaris_dataset_jru_v1	pulls a data set from imaris (only the data)
+Plugins>Stowers>Jay_Unruh>Misc Tools	custom amfret analysis jru v1	custom_amfret_analysis_jru_v1	does custom amfret analysis
+Plugins>Stowers>Jay_Unruh>Table Tools	dump table 2 stdout jru v1	dump_table_2_stdout_jru_v1	dumps a table to System.out.prinln
+Plugins>Stowers>Jay_Unruh>Misc Tools	custom amfret gate generation jru v1	custom_amfret_gate_generation_jru_v1	does custom amfret gate generation

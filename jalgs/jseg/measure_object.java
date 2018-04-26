@@ -247,6 +247,20 @@ public class measure_object{
 		cp[2]=(u[0]*v[1]-u[1]*v[0]);
 		return cp;
 	}
+	
+	/**********************
+	 * calculates the cross product of two vectors
+	 * @param u: vector 1
+	 * @param v: vector 2
+	 * @return
+	 */
+	public static double[] crossProd(double[] u,double[] v){
+		double[] cp=new double[3];
+		cp[0]=(u[1]*v[2]-u[2]*v[1]);
+		cp[1]=(u[2]*v[0]-u[0]*v[2]);
+		cp[2]=(u[0]*v[1]-u[1]*v[0]);
+		return cp;
+	}
 
 	public static float objwidth(float[] image,float id,int width,int height){
 		int minpos=width-1;

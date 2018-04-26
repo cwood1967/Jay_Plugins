@@ -899,6 +899,8 @@ public class table_tools{
 		return retvals.toString();
 	}
 	
+	public static String[] delims= {"tab","comma","space","newline"};
+	
 	public static String get_delim(int delim){
 		String sep="\t";
 		if(delim==1) sep=",";

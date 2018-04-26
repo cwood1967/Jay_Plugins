@@ -569,5 +569,47 @@ public class profiler{
 		oc[3]=distance*yinc+coords[3];
 		return oc;
 	}
+	
+	/*************
+	 * this plugin does the 3D realignment more robustly via a rotation matrix and interpolation
+	 * @param stack: the source image stack
+	 * @param width: width of stack
+	 * @param height: height of stack
+	 * @param vertex: the point about which rotation occurs
+	 * @param zratio: ratio of zres to xyres
+	 * @param rotmat: the 3 x 3 rotation matrix
+	 * @param newsize: the size of the rotated image
+	 * @param zshift: the shift of the start of the stack "below" the vertex in xy units
+	 * @param zsize: the size of the stack in xy units
+	 * @return
+	 */
+	public float[][] getRotated3DImage(Object[] stack,int width,int height,float[] vertex,float zratio,float[][] rotmat,int newsize,float zshift,int zsize){
+		//build a rotated image by rotating each voxel to its position in the original image and interpolating
+		int rotsize=newsize;
+		//int rotheight=4*rotsize;
+		int rotheight=zsize;
+		float[][] rotated=new float[rotheight][rotsize*rotsize];
+		for(int i=0;i<rotheight;i++){
+			float zpos=(float)(i-zshift);
+			for(int j=0;j<rotsize;j++){
+				float ypos=(float)(j-rotsize/2);
+				for(int k=0;k<rotsize;k++){
+					float xpos=(float)(k-rotsize/2);
+					//multiply by the rotation matrix to transform in the old coordinates
+					float xoff=rotmat[0][0]*xpos+rotmat[0][1]*ypos+rotmat[0][2]*zpos;
+					float yoff=rotmat[1][0]*xpos+rotmat[1][1]*ypos+rotmat[1][2]*zpos;
+					float zoff=rotmat[2][0]*xpos+rotmat[2][1]*ypos+rotmat[2][2]*zpos;
+					//correct for anisotropic resolution
+					zoff/=zratio;
+					//add the vertex position back
+					xoff+=vertex[0]; yoff+=vertex[1]; zoff+=(vertex[2]/zratio);
+					//if(i==0 && j==0 && k==0) IJ.log(""+xoff+" , "+yoff+" , "+zoff);
+					//finally interpolate the original image at these points
+					rotated[i][k+j*rotsize]=interpolation.interp3D(stack,width,height,xoff,yoff,zoff);
+				}
+			}
+		}
+		return rotated;
+	}
 
 }
