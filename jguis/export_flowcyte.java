@@ -16,6 +16,7 @@ import java.util.List;
 public class export_flowcyte{
 	private static String labeldelim="|\u0024";
 	private static String delim2="|";
+	public int textheadlength=20048;
 	
 	public boolean write_table(List<List<String>> table,String[] labels,String dir,String fname){
 		int npts=table.size();
@@ -30,9 +31,19 @@ public class export_flowcyte{
 		return write_table(data,labels,dir+fname);
 	}
 	
-	public boolean write_table(float[][] data,String[] labels,String path){
+	public boolean write_table(float[][] data,String[] labels,String path) {
+		String[][] meta=null;
+		return write_table(data,labels,path,meta);
+	}
+	
+	public boolean write_table(float[][] data,String[] labels,String path,String[][] meta){
 		int nch=labels.length;
 		int npts=data.length;
+		/*if(meta!=null) {
+			for(int i=0;i<meta.length;i++) {
+				textheadlength+=3+meta[i][0].length()+meta[i][1].length();
+			}
+		}*/
 		String fname=(new File(path)).getName();
 		try{
 			OutputStream os=new BufferedOutputStream(new FileOutputStream(path));
@@ -41,7 +52,7 @@ public class export_flowcyte{
 			String header=get_FCS_header(nch,npts);
 			os.write(header.getBytes()); offset+=header.length();
 			//now the TEXT header
-			String texthead=get_TEXT_header(nch,npts,fname);
+			String texthead=get_TEXT_header(nch,npts,fname,meta);
 			os.write(texthead.getBytes()); offset+=texthead.length();
 			//now the parameter header
 			int[] ranges=get_ranges(data,nch);
@@ -78,24 +89,24 @@ public class export_flowcyte{
 		StringBuffer sb=new StringBuffer();
 		sb.append("FCS3.0    ");
 		sb.append(pad_integer(58));
-		sb.append(pad_integer(20047));
-		sb.append(pad_integer(20048));
+		sb.append(pad_integer(textheadlength-1));
+		sb.append(pad_integer(textheadlength));
 		int totpts=nch*npts*4;
-		sb.append(pad_integer(20048+totpts-1));
+		sb.append(pad_integer(textheadlength+totpts-1));
 		sb.append(pad_integer(0));
 		sb.append(pad_integer(0));
 		return sb.toString();
 	}
 
-	private String get_TEXT_header(int nch,int npts,String filename){
+	private String get_TEXT_header(int nch,int npts,String filename,String[][] meta){
 		StringBuffer sb=new StringBuffer();
 		sb.append(labeldelim+"TOT"+delim2+npts);
 		sb.append(labeldelim+"PAR"+delim2+nch);
 		sb.append(labeldelim+"BYTEORD"+delim2+"1,2,3,4");
 		sb.append(labeldelim+"DATATYPE"+delim2+"F");
 		sb.append(labeldelim+"MODE"+delim2+"L");
-		sb.append(labeldelim+"BEGINDATA"+delim2+"20048");
-		int dataend=nch*npts*8+20048;
+		sb.append(labeldelim+"BEGINDATA"+delim2+textheadlength);
+		int dataend=nch*npts*8+textheadlength;
 		sb.append(labeldelim+"ENDDATA"+delim2+dataend);
 		sb.append(labeldelim+"BEGINANALYSIS"+delim2+"0");
 		sb.append(labeldelim+"ENDANALYSIS"+delim2+"0");
@@ -110,6 +121,11 @@ public class export_flowcyte{
 		String date=""+(calendar.get(Calendar.MONTH)+1)+"-"+calendar.get(Calendar.DAY_OF_MONTH)+"-"+calendar.get(Calendar.YEAR);
 		sb.append(labeldelim+"DATE"+delim2+date);
 		sb.append(labeldelim+"CYT"+delim2+"ImageJ_Table");
+		if(meta!=null) {
+    		for(int i=0;i<meta[0].length;i++) {
+    			sb.append(labeldelim+meta[0][i]+delim2+meta[1][i]);
+    		}
+		}
 		//sb.append(labeldelim+"WELL ID"+delim2+wellID);
 		//sb.append(labeldelim+"PLATE ID"+delim2+plateID);
 		return sb.toString();

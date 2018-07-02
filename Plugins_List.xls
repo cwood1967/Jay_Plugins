@@ -318,3 +318,6 @@ Plugins>Stowers>Jay_Unruh>File Tools	get imaris dataset jru v1	get_imaris_datase
 Plugins>Stowers>Jay_Unruh>Misc Tools	custom amfret analysis jru v1	custom_amfret_analysis_jru_v1	does custom amfret analysis
 Plugins>Stowers>Jay_Unruh>Table Tools	dump table 2 stdout jru v1	dump_table_2_stdout_jru_v1	dumps a table to System.out.prinln
 Plugins>Stowers>Jay_Unruh>Misc Tools	custom amfret gate generation jru v1	custom_amfret_gate_generation_jru_v1	does custom amfret gate generation
+Plugins>Stowers>Jay_Unruh>Misc Tools	realign npcs jru v1	realign_npcs_jru_v1	realigns spots on the surface of a sphere
+Plugins>Stowers>Jay_Unruh>File Tools	get loci objective info jru v1	get_loci_objective_info_jru_v1	puts selected metadata objective info from a file into a table
+Plugins>Stowers>Jay_Unruh>Misc Tools	wrap angle profile jru v1	wrap_angle_profile_jru_v1	takes an angle profile with the x axis in degrees and wraps values so that they lie between -179 and +180

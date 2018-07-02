@@ -56,6 +56,16 @@ public class table_tools{
 		}
 		return list2stringarray(nonnulls);
 	}
+	
+	public static int[] wellName2RowCol(String wellname) {
+		//turns a wellname (in A1 or A01 format) to row and column numbers (base 1)
+		int slen=wellname.length();
+		if(slen>3) return new int[] {-1,-1};
+		int col=Integer.parseInt(wellname.substring(1,slen));
+		String temp=wellname.toUpperCase();
+		int row=1+(int)temp.charAt(0)-(int)('A');
+		return new int[] {row,col};
+	}
 
 	public static boolean is_number(String snumber){
 		try{

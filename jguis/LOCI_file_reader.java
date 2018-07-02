@@ -360,6 +360,7 @@ public class LOCI_file_reader{
 			float psize=1.0f;
 			float zsize=1.0f;
 			float tsize=1.0f;
+			//omexmlMetadata.getObjectiveImmersion(0,0);
 			if(!nometa){
 				if(omexmlMetadata.getPixelsPhysicalSizeX(series)!=null)
 					psize=omexmlMetadata.getPixelsPhysicalSizeX(series).value().floatValue();
@@ -446,6 +447,40 @@ public class LOCI_file_reader{
 			Hashtable<String,Object> globalMeta=r.getGlobalMetadata();
 			r.close();
 			return globalMeta;
+		}catch(FormatException e){
+			return null;
+		}catch(IOException e){
+			return null;
+		}
+	}
+	
+	public String[][] getOMEXMLObjectiveInfo(String directory,String fname,int series){
+		//here we get selected info about the objective from the omexmlmetadata
+		IMetadata omexmlMetadata=MetadataTools.createOMEXMLMetadata();
+		ImageProcessorReader r=new ImageProcessorReader(new ChannelSeparator(LociPrefs.makeImageReader()));
+		try{
+			r.setMetadataStore(omexmlMetadata);
+			r.setId(directory+fname);
+			nseries=r.getSeriesCount();
+			if(series>=nseries) series=0;
+			r.setSeries(series);
+			String[][] objinfo=new String[7][2];
+			objinfo[0][0]="Correction";
+			objinfo[0][1]=omexmlMetadata.getObjectiveCorrection(0,0).toString();
+			objinfo[1][0]="Immersion";
+			objinfo[1][1]=omexmlMetadata.getObjectiveImmersion(0,0).toString();
+			objinfo[2][0]="LensNA";
+			objinfo[2][1]=omexmlMetadata.getObjectiveLensNA(0,0).toString();
+			objinfo[3][0]="NominalMagnification";
+			objinfo[3][1]=omexmlMetadata.getObjectiveNominalMagnification(0,0).toString();
+			objinfo[4][0]="Manufacturer";
+			objinfo[4][1]=omexmlMetadata.getObjectiveManufacturer(0,0).toString();
+			objinfo[5][0]="Model";
+			objinfo[5][1]=omexmlMetadata.getObjectiveModel(0,0).toString();
+			objinfo[6][0]="WorkingDistance";
+			objinfo[6][1]=omexmlMetadata.getObjectiveWorkingDistance(0,0).toString();
+			r.close();
+			return objinfo;
 		}catch(FormatException e){
 			return null;
 		}catch(IOException e){

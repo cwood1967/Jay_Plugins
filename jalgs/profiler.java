@@ -10,6 +10,8 @@ package jalgs;
 
 import java.awt.Polygon;
 
+import jalgs.jseg.measure_object;
+
 public class profiler{
 	// here we have static methods to generate line and polyline thick profiles
 
@@ -570,12 +572,37 @@ public class profiler{
 		return oc;
 	}
 	
+	/*********************
+	 * this plugin rotates a profile from its current vector to the z axis vector
+	 * @param stack: the source image stack
+	 * @param width: width of stack
+	 * @param height: height of stack
+	 * @param center: the point about which rotation occurs
+	 * @param zratio: ratio of zres to xyres
+	 * @param currvec: the current vector from the center point 
+	 * @param newsize: the size (xy) of the rotated image
+	 * @param zshift: the shift of the start of the stack "below" the vertex in xy units
+	 * @param zsize: the size of the stack in xy units
+	 * @return
+	 */
+	public static float[][] getRotated3DImage(Object[] stack,int width,int height,float[] center,float zratio,float[] currvec,int newsize,float zshift,int zsize){
+		float[] zvec= {0.0f,0.0f,1.0f};
+		//get the inner angle with the z axis
+		float angle=measure_object.get_inner_angle(zvec,currvec);
+		//the cross product will give us the axis to rotate about
+		float[] crossprod=measure_object.crossProd(zvec,currvec);
+		//normalize the cross product
+		crossprod=measure_object.norm_vector(crossprod);
+		float[][] rotmat=measure_object.getRotationMatrix(crossprod,angle);
+		return getRotated3DImage(stack,width,height,center,zratio,rotmat,newsize,zshift,zsize);
+	}
+	
 	/*************
 	 * this plugin does the 3D realignment more robustly via a rotation matrix and interpolation
 	 * @param stack: the source image stack
 	 * @param width: width of stack
 	 * @param height: height of stack
-	 * @param vertex: the point about which rotation occurs
+	 * @param center: the point about which rotation occurs
 	 * @param zratio: ratio of zres to xyres
 	 * @param rotmat: the 3 x 3 rotation matrix
 	 * @param newsize: the size of the rotated image
@@ -583,7 +610,7 @@ public class profiler{
 	 * @param zsize: the size of the stack in xy units
 	 * @return
 	 */
-	public float[][] getRotated3DImage(Object[] stack,int width,int height,float[] vertex,float zratio,float[][] rotmat,int newsize,float zshift,int zsize){
+	public static float[][] getRotated3DImage(Object[] stack,int width,int height,float[] center,float zratio,float[][] rotmat,int newsize,float zshift,int zsize){
 		//build a rotated image by rotating each voxel to its position in the original image and interpolating
 		int rotsize=newsize;
 		//int rotheight=4*rotsize;
@@ -602,7 +629,7 @@ public class profiler{
 					//correct for anisotropic resolution
 					zoff/=zratio;
 					//add the vertex position back
-					xoff+=vertex[0]; yoff+=vertex[1]; zoff+=(vertex[2]/zratio);
+					xoff+=center[0]; yoff+=center[1]; zoff+=(center[2]/zratio);
 					//if(i==0 && j==0 && k==0) IJ.log(""+xoff+" , "+yoff+" , "+zoff);
 					//finally interpolate the original image at these points
 					rotated[i][k+j*rotsize]=interpolation.interp3D(stack,width,height,xoff,yoff,zoff);
