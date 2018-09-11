@@ -1461,15 +1461,17 @@ public class findblobs3 implements Runnable{
 	}
 
 	public Polygon[] get_object_outlines(float[] objects){
-		int[][] coords=get_objects_coords(objects);
+		int[][] coords=get_objects_coords(objects); //note this renumbers the objects
 		return get_object_outlines(objects,coords);
 	}
 
 	public Polygon[] get_object_outlines(float[] objects,int[][] coords){
 		Polygon[] outlines=new Polygon[coords.length];
 		for(int i=0;i<coords.length;i++){
-			int[][] outline=traceEdge(coords[i][0],coords[i][1],objects);
-			outlines[i]=new Polygon(outline[0],outline[1],outline[0].length);
+			if(coords[i]!=null) {
+				int[][] outline=traceEdge(coords[i][0],coords[i][1],objects);
+				outlines[i]=new Polygon(outline[0],outline[1],outline[0].length);
+			}
 		}
 		return outlines;
 	}

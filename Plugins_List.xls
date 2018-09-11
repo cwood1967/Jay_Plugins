@@ -321,3 +321,9 @@ Plugins>Stowers>Jay_Unruh>Misc Tools	custom amfret gate generation jru v1	custom
 Plugins>Stowers>Jay_Unruh>Misc Tools	realign npcs jru v1	realign_npcs_jru_v1	realigns spots on the surface of a sphere
 Plugins>Stowers>Jay_Unruh>File Tools	get loci objective info jru v1	get_loci_objective_info_jru_v1	puts selected metadata objective info from a file into a table
 Plugins>Stowers>Jay_Unruh>Misc Tools	wrap angle profile jru v1	wrap_angle_profile_jru_v1	takes an angle profile with the x axis in degrees and wraps values so that they lie between -179 and +180
+Plugins>Stowers>Jay_Unruh>Misc Tools	segment nucleoli jru v2	segment_nucleoli_jru_v2	runs multithreaded batch segmentation of nucleoli with intensity and shape parameters
+Plugins>Stowers>Jay_Unruh>Misc Tools	segment nucleoli jru v3	segment_nucleoli_jru_v3	nucleolar segmentation plugin
+Plugins>Stowers>Jay_Unruh>Misc Tools	custom amfret gate generation jru v2	custom_amfret_gate_generation_jru_v2	does custom amfret gate generation for imagestream data
+Plugins>Stowers>Jay_Unruh>Misc Tools	custom amfret analysis jru v2	custom_amfret_analysis_jru_v2	does custom amfret analysis for imagestream data
+Plugins>Stowers>Jay_Unruh>Misc Tools	set white balance jru v1	set_white_balance_jru_v1	sets the white balance of an image using an offset and a selected white region
+Plugins>Stowers>Jay_Unruh>Segmentation Tools	filter largest objects jru v1	filter_largest_objects_jru_v1	filters the n largest objects in an image or movie

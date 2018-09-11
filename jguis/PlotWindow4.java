@@ -18,6 +18,7 @@ import ij.plugin.frame.Recorder;
 import ij.process.ColorProcessor;
 import ij.text.TextWindow;
 import ij.util.Tools;
+import jalgs.jdataio;
 
 import java.awt.Button;
 import java.awt.FileDialog;
@@ -325,7 +326,7 @@ public class PlotWindow4 extends ImageWindow implements ActionListener,Clipboard
 	}
 
 	public void showList(){
-		StringBuffer sb=new StringBuffer();
+		/*StringBuffer sb=new StringBuffer();
 		StringBuffer headings=new StringBuffer();
 		int tempnseries=p3.getNSeries();
 		float[][] tempxvals=p3.getXValues();
@@ -342,6 +343,54 @@ public class PlotWindow4 extends ImageWindow implements ActionListener,Clipboard
 				if(j<(tempnseries-1)){
 					sb.append("\t");
 				}
+			}
+			sb.append("\n");
+		}
+		new TextWindow("Plot Values",headings.toString(),sb.toString(),200,400);*/
+		showList(true,true,true,true,false,false,true);
+	}
+	
+	public void showList(boolean copyfirstx,boolean copyotherx,boolean copyfirsty,boolean copyothery,boolean copyerrs,boolean copybotherrs,boolean padnan){
+		StringBuffer sb = new StringBuffer();
+		StringBuffer headings=new StringBuffer();
+		float[][] xvals=p3.getXValues();
+		float[][] yvals=p3.getYValues();
+		int[] npts=p3.getNpts();
+		float[][][] errs=p3.getErrors();
+		int length=yvals[0].length;
+		int nseries=yvals.length;
+		//first copy the column titles
+		for (int j=0; j<nseries; j++) {
+			if(j==0 && copyfirstx) headings.append("X"+(j+1)+"\t");
+			if(j==0 && copyfirsty) headings.append("Y"+(j+1)+"\t");
+			if(j>0 && copyotherx) headings.append("X"+(j+1)+"\t");
+			if(j>0 && copyothery) headings.append("Y"+(j+1)+"\t");
+			if(copyerrs && errs!=null){
+				if(copybotherrs) headings.append("err1\terr2\t");
+				else headings.append("err1\t");
+			}
+		}
+		for (int i=0; i<length; i++) {
+			for (int j=0; j<nseries; j++) {
+				String xval=""+xvals[j][i];
+				String yval=""+yvals[j][i];
+				if(padnan){
+					if(i>=npts[j]){xval="NaN"; yval="NaN";}
+				}
+				if(j==0 && copyfirstx) sb.append(xval+"\t");
+				if(j==0 && copyfirsty) sb.append(yval+"\t");
+				if(j>0 && copyotherx) sb.append(xval+"\t");
+				if(j>0 && copyothery) sb.append(yval+"\t");
+				if(copyerrs && errs!=null){
+					String err1=""+errs[0][j][i];
+					String err2=""+errs[1][j][i];
+					if(padnan){
+						if(i>=npts[j]){err1="NaN"; err2="NaN";}
+					}
+					if(copybotherrs) sb.append(err1+"\t"+err2+"\t");
+					else sb.append(err1+"\t");
+				}
+				if(j==(nseries-1)){sb.deleteCharAt(sb.length()-1);}
 			}
 			sb.append("\n");
 		}
@@ -518,6 +567,75 @@ public class PlotWindow4 extends ImageWindow implements ActionListener,Clipboard
 		systemClipboard.setContents(contents,this);
 		IJ.showStatus(text.length()+" characters copied to Clipboard");
 	}
+	
+	/*************
+	 * this is a more customizable version of copyToClipboard
+	 * @param copytitles
+	 * @param copyfirstx
+	 * @param copyotherx
+	 * @param copyfirsty
+	 * @param copyothery
+	 * @param copyerrs
+	 * @param copybotherrs
+	 * @param padnan
+	 */
+	void copyCustom(boolean copytitles,boolean copyfirstx,boolean copyotherx,boolean copyfirsty,boolean copyothery,boolean copyerrs,boolean copybotherrs,boolean padnan) {
+		Clipboard systemClipboard = null;
+		try {systemClipboard = IJ.getInstance().getToolkit().getSystemClipboard();}
+		catch (Exception e) {systemClipboard = null; }
+		if (systemClipboard==null)
+			{IJ.error("Unable to copy to Clipboard."); return;}
+		IJ.showStatus("Copying plot values...");
+		StringBuffer sb = new StringBuffer();
+		float[][] xvals=p3.getXValues();
+		float[][] yvals=p3.getYValues();
+		int[] npts=p3.getNpts();
+		float[][][] errs=p3.getErrors();
+		int length=yvals[0].length;
+		int nseries=yvals.length;
+		//first copy the column titles
+		if(copytitles){
+			for (int j=0; j<nseries; j++) {
+				if(j==0 && copyfirstx) sb.append("x"+(j+1)+"\t");
+				if(j==0 && copyfirsty) sb.append("y"+(j+1)+"\t");
+				if(j>0 && copyotherx) sb.append("x"+(j+1)+"\t");
+				if(j>0 && copyothery) sb.append("y"+(j+1)+"\t");
+				if(copyerrs && errs!=null){
+					if(copybotherrs) sb.append("err1\terr2\t");
+					else sb.append("err1\t");
+				}
+			}
+			sb.append("\n");
+		}
+		for (int i=0; i<length; i++) {
+			for (int j=0; j<nseries; j++) {
+				String xval=""+xvals[j][i];
+				String yval=""+yvals[j][i];
+				if(padnan){
+					if(i>=npts[j]){xval="NaN"; yval="NaN";}
+				}
+				if(j==0 && copyfirstx) sb.append(xval+"\t");
+				if(j==0 && copyfirsty) sb.append(yval+"\t");
+				if(j>0 && copyotherx) sb.append(xval+"\t");
+				if(j>0 && copyothery) sb.append(yval+"\t");
+				if(copyerrs && errs!=null){
+					String err1=""+errs[0][j][i];
+					String err2=""+errs[1][j][i];
+					if(padnan){
+						if(i>=npts[j]){err1="NaN"; err2="NaN";}
+					}
+					if(copybotherrs) sb.append(err1+"\t"+err2+"\t");
+					else sb.append(err1+"\t");
+				}
+				if(j==(nseries-1)){sb.deleteCharAt(sb.length()-1);}
+			}
+			sb.append("\n");
+		}
+		String text = sb.toString();
+		StringSelection contents = new StringSelection(text);
+		systemClipboard.setContents(contents, this);
+		IJ.showStatus(text.length() + " characters copied to Clipboard");
+	}
 
 	void editPlot(){
 		GenericDialog gd=new GenericDialog("Plot Options");
@@ -635,7 +753,13 @@ public class PlotWindow4 extends ImageWindow implements ActionListener,Clipboard
 	public void actionPerformed(ActionEvent e){
 		Object b=e.getSource();
 		if(b==list){
-			showList();
+			int mods=e.getModifiers();
+			//byte[] mods2= {(byte)mods,(byte)(mods>>8),(byte)(mods>>16),(byte)(mods>>24)};
+			//IJ.log("Modifiers = "+jdataio.printHexBytes(mods2));
+			//if((mods&ActionEvent.CTRL_MASK)!=0 || (mods&ActionEvent.ALT_MASK)!=0 || (mods&ActionEvent.SHIFT_MASK)!=0) showList(true,true,true,true,true,false,true);
+			//getModifiers should only be non-zero if a key was held during the click
+			if(mods!=0) showList(true,true,true,true,true,false,true);
+			else showList();
 		}else{
 			if(b==save){
 				GenericDialog gd=new GenericDialog("Save Options");
@@ -665,7 +789,8 @@ public class PlotWindow4 extends ImageWindow implements ActionListener,Clipboard
 					editPlot();
 				}else{
 					if(b==copy){
-						copyToClipboard();
+						if(e.getModifiers()!=0) copyCustom(true,true,true,true,true,true,false,true);
+						else copyToClipboard();
 					}else{
 						if(b==selbutton){
 							p3.selectSeries(p3.getSelected()+1);

@@ -1073,7 +1073,11 @@ public class jdataio{
     }
 	
 	public static String printHexString(String contents){
-		InputStream is = new ByteArrayInputStream(contents.getBytes());
+		return printHexBytes(contents.getBytes());
+	}
+	
+	public static String printHexBytes(byte[] contents) {
+		InputStream is=new ByteArrayInputStream(contents);
 		return printHexFile(is);
 	}
 	

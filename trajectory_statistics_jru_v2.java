@@ -61,14 +61,23 @@ public class trajectory_statistics_jru_v2 implements PlugIn {
 				for(int i=1;i<extras.length;i++) IJ.log(statistic+" = \t"+extras[i]);
 			}
 		} else {
+			String collabels="Trajectory\t"+statistic;
+			if(statistic.equals("Percentile")){
+				for(int j=1;j<extras.length;j++) collabels=collabels+"\t"+statistic+(j+1);
+			}
+			TextWindow tw=new TextWindow("Trajectory_Statistics",collabels,"",400,200);
 			for(int i=0;i<yvals.length;i++){
 				float[] temp=new float[npts[i]];
 				System.arraycopy(yvals[i],0,temp,0,npts[i]);
 				float stat=jstatistics.getstatistic(statistic,temp,extras);
-				IJ.log(statistic+""+(i+1)+" = \t"+stat);
+				StringBuffer sb=new StringBuffer();
+				sb.append(""+(i+1)+"\t"+stat);
+				//IJ.log(statistic+""+(i+1)+" = \t"+stat);
 				if(statistic.equals("Percentile")){
-					for(int j=1;j<extras.length;j++) IJ.log(statistic+""+(i+1)+" = \t"+extras[j]);
+					//for(int j=1;j<extras.length;j++) IJ.log(statistic+""+(i+1)+" = \t"+extras[j]);
+					for(int j=1;j<extras.length;j++) sb.append("\t"+extras[j]);
 				}
+				tw.append(sb.toString());
 			}
 		}
 	}

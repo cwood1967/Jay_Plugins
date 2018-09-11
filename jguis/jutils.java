@@ -126,12 +126,16 @@ public class jutils{
 			/*Field maincurvefield=temp.getDeclaredField("getMainCurveObject");
 			maincurvefield.setAccessible(true);
 			Object po=maincurvefield.get(plot);*/
-			Field xlabelfield=temp.getDeclaredField("xLabel");
+			/*Field xlabelfield=temp.getDeclaredField("xLabel");
 			xlabelfield.setAccessible(true);
 			String xlabel=(String)xlabelfield.get(plot);
 			Field ylabelfield=temp.getDeclaredField("yLabel");
 			ylabelfield.setAccessible(true);
-			String ylabel=(String)ylabelfield.get(plot);
+			String ylabel=(String)ylabelfield.get(plot);*/
+			String xlabel=plot.getLabel('x');
+			String ylabel=plot.getLabel('y');
+			if(xlabel.equals("")) xlabel="x";
+			if(ylabel.equals("")) xlabel="y";
 			double[] limits=plot.getLimits();
 			double xmin=limits[0]; double xmax=limits[1]; double ymin=limits[2]; double ymax=limits[3];
 			/*Field xminfield=temp.getDeclaredField("xMin");
@@ -165,12 +169,12 @@ public class jutils{
 			}*/
 			p4.setLimits(new float[]{(float)xmin,(float)xmax,(float)ymin,(float)ymax});
 			return p4;
-		}catch(NoSuchFieldException e){
-			IJ.log("no such field exception");
+		//}catch(NoSuchFieldException e){
+		//	IJ.log("no such field exception");
 		}catch(IllegalArgumentException e){
 			IJ.log("illegal argument exception");
-		}catch(IllegalAccessException e){
-			IJ.log("illegal access exception");
+		//}catch(IllegalAccessException e){
+		//	IJ.log("illegal access exception");
 		}
 		return null;
 	}

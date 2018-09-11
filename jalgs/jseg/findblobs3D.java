@@ -650,6 +650,69 @@ public class findblobs3D{
 		return lims;
 	}
 	
+	public Object[] projectObjects(float[][] objects,int method,boolean keep3D){
+		//here we find the z projection for each object (0 is largest, 1 is sum) and place it in a 3D space
+		//if keep3D is false, we place it in the first slice
+		//need to get a z area profile for each object
+		int[][] zprof=new int[nobjects][depth];
+		for(int i=0;i<depth;i++) {
+			for(int j=0;j<height;j++) {
+				for(int k=0;k<width;k++) {
+					int id=(int)objects[i][k+j*width];
+					if(id>0 && id<=nobjects) {
+						zprof[id-1][i]++;
+					}
+				}
+			}
+		}
+		//now find either the average z position or the maximum z position
+		float[] zposstats=new float[nobjects];
+		float[] areas=new float[nobjects];
+		for(int i=0;i<nobjects;i++) {
+			areas[i]=jstatistics.getstatistic("Sum",zprof[i],null);
+			if(method==0) zposstats[i]=jstatistics.getstatistic("MaxPos",zprof[i],null);
+			if(method==1) zposstats[i]=jstatistics.getstatistic("AvgPos",zprof[i],null);
+		}
+		float[][] newobj=null;
+		if(keep3D) newobj=new float[depth][width*height];
+		else newobj=new float[1][width*height];
+		int[][] filllims=getallfilllimits(objects);
+		for(int i=0;i<nobjects;i++) {
+			if(areas[i]>0) {
+				if(method==0) {
+					//copy the largest slice to the new image
+					int bestslice=(int)zposstats[i];
+					if(bestslice<0) bestslice=0; if(bestslice>=depth) bestslice=(depth-1);
+					for(int j=filllims[i][2];j<=filllims[i][3];j++) {
+						for(int k=filllims[i][0];k<=filllims[i][1];k++) {
+							int id=(int)objects[bestslice][k+j*width];
+							if(id==(i+1)) {
+								if(keep3D) newobj[bestslice][k+j*width]=(float)id;
+								else newobj[0][k+j*width]=(float)id;
+							}
+						}
+					}
+				} else {
+					//project the object onto its best slice
+					int bestslice=Math.round(zposstats[i]);
+					if(bestslice<0) bestslice=0; if(bestslice>=depth) bestslice=(depth-1);
+					for(int l=filllims[i][4];l<=filllims[i][5];l++) {
+    					for(int j=filllims[i][2];j<=filllims[i][3];j++) {
+    						for(int k=filllims[i][0];k<=filllims[i][1];k++) {
+    							int id=(int)objects[l][k+j*width];
+    							if(id==(i+1)) {
+    								if(keep3D) newobj[bestslice][k+j*width]=(float)id;
+    								else newobj[0][k+j*width]=(float)id;
+    							}
+    						}
+    					}
+					}
+				}
+			}
+		}
+		return new Object[] {newobj,zposstats};
+	}
+	
 	/********************************************************
 	 * gets all of of the object stats
 	 * @param objects
