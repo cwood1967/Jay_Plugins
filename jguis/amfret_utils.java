@@ -1,5 +1,7 @@
 package jguis;
 
+import java.awt.Color;
+import java.awt.Polygon;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -27,6 +29,7 @@ import jalgs.jfit.fit_stretched_exp;
 public class amfret_utils implements gui_interface{
 	public String accname="FL10-A";
 	public String fretname="FL04-A";
+	public boolean drawgate=false;
 
 	public static void main(String[] args){
 		//here we batch process a folder outside of imagej
@@ -37,6 +40,7 @@ public class amfret_utils implements gui_interface{
 		//this is a hack to account for flowcore renaming the columns
 		custom.accname=custom.accname.replace('-','.');
 		custom.fretname=custom.fretname.replace('-','.');
+		custom.drawgate=true;
 		if(args[0].equals("--getgate")) {
 			//in this version we output a gate roi
 			//args is "--getgate", indir, infile, savedir, savename, minconc, maxconc
@@ -303,6 +307,12 @@ public class amfret_utils implements gui_interface{
 		ColorProcessor amfretcp=amfrethist.getProcessor();
 		ColorProcessor fitcp=fitplot.getProcessor();
 		ColorProcessor overviewcp=mergeImages(amfretcp,fitcp);
+		if(drawgate) {
+    		Polygon gatepoly=rois[0].getPolygon();
+    		gatepoly.translate(90,20);
+    		overviewcp.setColor(Color.yellow);
+    		jutils.draw_polygon(overviewcp,gatepoly,true);
+		}
 		ImagePlus overviewimp=new ImagePlus("Overview",overviewcp);
 		String overviewname=name.substring(0,name.length()-4)+"_overview.png";
 		IJ.save(overviewimp,outdir+overviewname);
@@ -535,6 +545,12 @@ public class amfret_utils implements gui_interface{
 			ColorProcessor amfretcp=amfrethist.getProcessor();
 			ColorProcessor fitcp=fitplot.getProcessor();
 			ColorProcessor overviewcp=mergeImages(amfretcp,fitcp);
+			if(drawgate) {
+	    		Polygon gatepoly=rois[0].getPolygon();
+	    		gatepoly.translate(90,20);
+	    		overviewcp.setColor(Color.yellow);
+	    		jutils.draw_polygon(overviewcp,gatepoly,true);
+			}
 			ImagePlus overviewimp=new ImagePlus("Overview",overviewcp);
 			String overviewname=name.substring(0,name.length()-4)+"_overview.png";
 			IJ.save(overviewimp,outdir+overviewname);

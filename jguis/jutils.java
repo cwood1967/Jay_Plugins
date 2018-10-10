@@ -334,12 +334,8 @@ public class jutils{
 	public static PlotWindow4 getPW4SelCopy(ImageWindow iw,int selected){
 		if(iw.getClass().getName().equals("jguis.PlotWindow4")){
 			float[][] yvals=(float[][])runPW4VoidMethod(iw,"getYValues");
-			if(selected<=0){
-				selected=0;
-			}
-			if(selected>=yvals.length){
-				selected=0;
-			}
+			if(selected<=0) selected=0;
+			if(selected>=yvals.length) selected=0;
 			int[] npts=(int[])runPW4VoidMethod(iw,"getNpts");
 			float[] newyvals=new float[npts[selected]];
 			System.arraycopy(yvals[selected],0,newyvals,0,npts[selected]);
@@ -398,6 +394,53 @@ public class jutils{
 		}else{
 			return null;
 		}
+	}
+	
+	public static PlotWindow3D getPW3DSelCopy(ImageWindow iw,int selected) {
+		float[][] yvals=(float[][])runPW4VoidMethod(iw,"getYValues");
+		if(selected<=0) selected=0;
+		if(selected>=yvals.length) selected=0;
+		int[][] npts=(int[][])runPW4VoidMethod(iw,"getNpts");
+		float[][][] zvals=(float[][][])runPW4VoidMethod(iw,"getZValues");
+		float[][] xvals=(float[][])runPW4VoidMethod(iw,"getXValues");
+		Object plot=runPW4VoidMethod(iw,"getPlot");
+		String[] labels=(String[])runPW4VoidMethod(iw,"getAllLabels");
+		String[] newlabels=new String[labels.length];
+		copystringarray(labels,newlabels);
+		float[] limits=(float[])runPW4VoidMethod(iw,"getLimits");
+		int[] shapes=(int[])runPW4VoidMethod(iw,"getShapes");
+		int[] colors=(int[])runPW4VoidMethod(iw,"getColors");
+		boolean[] logaxes=(boolean[])runPW4VoidMethod(iw,"getLogAxes");
+		PlotWindow3D pw=null;
+		if(plot.getClass().getName().equals("jguis.Traj3D")) {
+			float[] newyvals=new float[npts[0][selected]];
+			System.arraycopy(yvals[selected],0,newyvals,0,npts[0][selected]);
+			float[] newxvals=new float[npts[0][selected]];
+			System.arraycopy(xvals[selected],0,newxvals,0,npts[0][selected]);
+			float[] newzvals=new float[npts[0][selected]];
+			System.arraycopy(zvals[0][selected],0,newzvals,0,npts[0][selected]);
+			Traj3D plot2=new Traj3D(labels[1],labels[2],labels[3],newxvals,newyvals,newzvals);
+			pw=new PlotWindow3D(labels[0]+"-series"+(selected+1),plot2);
+		} else {
+			float[] newyvals=new float[npts[1][selected]];
+			System.arraycopy(yvals[selected],0,newyvals,0,npts[1][selected]);
+			float[] newxvals=new float[npts[selected][0]];
+			System.arraycopy(xvals[selected],0,newxvals,0,npts[0][selected]);
+			float[][] newzvals=new float[npts[0][selected]][npts[1][selected]];
+			for(int j=0;j<npts[0][selected];j++) {
+				System.arraycopy(zvals[selected][j],0,newzvals[j],0,npts[1][selected]);
+			}
+			Plot3D plot2=new Plot3D(labels[1],labels[2],labels[3],newxvals,newyvals,newzvals);
+			pw=new PlotWindow3D(labels[0]+"-series"+(selected+1),plot2);
+		}
+		pw.draw();
+		pw.setLogAxes(logaxes[0],logaxes[1],logaxes[2]);
+		int[] newshapes=pw.getShapes();
+		newshapes[0]=shapes[selected];
+		int[] newcolors=pw.getColors();
+		newcolors[0]=colors[selected];
+		pw.setLimits(limits);
+		return pw;
 	}
 
 	public static void savePW4(ImageWindow iw,String filename){

@@ -39,6 +39,8 @@ public class combine_trajectories_jru_v1 implements PlugIn {
 				newshapes[i]=shapes[i-origser];
 			}
 			pw.updatePlot();
+			String newtitle=pw.getTitle()+"-1";
+			pw.getImagePlus().setTitle(newtitle);
 		} else {
 			//assume for now that this is a 3D trajectory (not a 3D mesh)
 			float[][] xvals1=(float[][])jutils.runPW4VoidMethod(iw[0],"getXValues");

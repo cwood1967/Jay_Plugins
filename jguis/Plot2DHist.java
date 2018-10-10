@@ -939,9 +939,9 @@ public class Plot2DHist{
 		jdataio jdio=new jdataio();
 		// start with unique identifier for a 3D plot
 		jdio.writestring(os,"pw2_file_type");
-		jdio.writeintelint(os,4);
-		jdio.writestring(os,getxLabel());
-		jdio.writestring(os,getyLabel());
+		jdio.writeintelint(os,4); //specifies the 2D histogram plot type
+		jdio.writestring(os,getxLabel()); //x axis label
+		jdio.writestring(os,getyLabel()); //y axis label
 		jdio.writeintelfloat(os,xMin); // min x axis
 		jdio.writeintelfloat(os,xMax); // max x axis
 		jdio.writeintelfloat(os,yMin); // min y axis
@@ -950,10 +950,10 @@ public class Plot2DHist{
 		jdio.writeintelfloat(os,intMax); // max z axis
 		jdio.writeintelint(os,logx?1:0); // logx?
 		jdio.writeintelint(os,logy?1:0); // logy?
-		jdio.writeintelint(os,lutindex);
-		jdio.writeintelint(os,binSize);
-		jdio.writeintelintarray(os,luts[6]); // the custom lut
-		jdio.writeintelint(os,xValues.length);
+		jdio.writeintelint(os,lutindex); //the selected LUT for visualization
+		jdio.writeintelint(os,binSize); //the bin size (pixels)
+		jdio.writeintelintarray(os,luts[6]); // the custom lut (256 length integer)
+		jdio.writeintelint(os,xValues.length); //the number of data points
 		jdio.writeintelfloatarray(os,xValues,xValues.length);
 		jdio.writeintelfloatarray(os,yValues,yValues.length);
 		// save the errors if they exist

@@ -112,6 +112,12 @@ public class canny{
 		float[][] sobel=(new jsobel(width,height)).do_sobel(pixels);
 		return find_edges(pixels,sobel);
 	}
+	
+	public byte[] find_ridges(float[] pixels) {
+		//doesn't work!
+		float[][] sobel=(new jsobel(width,height)).get_ridges(pixels);
+		return find_edges(pixels,sobel);
+	}
 
 	private boolean ismaximumangle(float[] gradmag,int i,int j,float ga){
 		// 0,1,2

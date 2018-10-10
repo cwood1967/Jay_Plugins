@@ -327,3 +327,6 @@ Plugins>Stowers>Jay_Unruh>Misc Tools	custom amfret gate generation jru v2	custom
 Plugins>Stowers>Jay_Unruh>Misc Tools	custom amfret analysis jru v2	custom_amfret_analysis_jru_v2	does custom amfret analysis for imagestream data
 Plugins>Stowers>Jay_Unruh>Misc Tools	set white balance jru v1	set_white_balance_jru_v1	sets the white balance of an image using an offset and a selected white region
 Plugins>Stowers>Jay_Unruh>Segmentation Tools	filter largest objects jru v1	filter_largest_objects_jru_v1	filters the n largest objects in an image or movie
+Plugins>Stowers>Jay_Unruh>ImageStream	get 2D hist roi coords jru v1	get_2D_hist_roi_coords_jru_v1	gets the histogram coordinates for an roi on a 2D histogram
+Plugins>Stowers>Jay_Unruh>Image Tools	apply gamma jru v1	apply_gamma_jru_v1	interactively adjusts gamma for an 8-bit image
+Plugins>Stowers>Jay_Unruh>Trajectory Tools	search plot annotations jru v1	search_plot_annotations_jru_v1	searches plot annotations (or series numbers) and creates a new plot with the matches

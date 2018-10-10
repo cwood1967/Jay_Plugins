@@ -1386,9 +1386,9 @@ public class Plot4{
 	public void saveplot2os(OutputStream os){
 		jdataio jdio=new jdataio();
 		jdio.writestring(os,"pw2_file_type");
-		jdio.writeintelint(os,0);
-		jdio.writestring(os,getxLabel());
-		jdio.writestring(os,getyLabel());
+		jdio.writeintelint(os,0); //identifies this as a Plot4
+		jdio.writestring(os,getxLabel()); //x label
+		jdio.writestring(os,getyLabel()); //y label
 		jdio.writeintelint(os,nseries); // number of series'
 		jdio.writeintelint(os,getmaxpts()); // max number of pts
 		jdio.writeintelfloat(os,xMin); // min x axis

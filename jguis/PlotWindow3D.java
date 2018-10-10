@@ -639,6 +639,11 @@ public class PlotWindow3D extends ImageWindow implements ActionListener,Clipboar
 	public float[][] getZValues(int series){
 		return p3.getZValues(series);
 	}
+	
+	public String[] getAllLabels(){
+		String[] temp={imp.getTitle(),p3.getxLabel(),p3.getyLabel(),p3.getzLabel()};
+		return temp;
+	}
 
 	public String getPlotTitle(){
 		return imp.getTitle();
@@ -670,6 +675,10 @@ public class PlotWindow3D extends ImageWindow implements ActionListener,Clipboar
 
 	public float[] getLimits(){
 		return p3.getLimits();
+	}
+	
+	public boolean[] getLogAxes() {
+		return p3.getLogAxes();
 	}
 
 	public int[] getShapes(){
