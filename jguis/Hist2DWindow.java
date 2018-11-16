@@ -130,9 +130,16 @@ public class Hist2DWindow extends Panel implements ActionListener,AdjustmentList
 
 	public void init(ImagePlus ximp,ImagePlus yimp,ImagePlus zimp,ImagePlus dataimp,ImagePlus dispimp,int calltype){
 		//calltype is 1: N&B, 2: acceptor photobleaching fret, and 3: ratiometric fret
-		//want to add a spectral phasor option
+		//want to add a spectral phasor option (4)
 		//need a placeholder for profile data
 		init_options();
+		if(calltype==4) {
+			ascale=0;
+			xmin=-1.0f;
+			xmax=1.0f;
+			ymin=-1.0f;
+			ymax=1.0f;
+		}
 		setLayout(null);
 		// initialize all of the variables
 		width=ximp.getWidth();
@@ -172,6 +179,7 @@ public class Hist2DWindow extends Panel implements ActionListener,AdjustmentList
 		currslice=0;
 		addMouseMotionListener(this);
 		addMouseListener(this);
+
 		xminval=new TextField(""+xmin,10);
 		xminval.setBounds(90,10+imageheight+50+256+20,80,20);
 		xminval.addActionListener(this);

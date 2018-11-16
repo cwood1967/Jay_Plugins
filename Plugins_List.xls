@@ -330,3 +330,11 @@ Plugins>Stowers>Jay_Unruh>Segmentation Tools	filter largest objects jru v1	filte
 Plugins>Stowers>Jay_Unruh>ImageStream	get 2D hist roi coords jru v1	get_2D_hist_roi_coords_jru_v1	gets the histogram coordinates for an roi on a 2D histogram
 Plugins>Stowers>Jay_Unruh>Image Tools	apply gamma jru v1	apply_gamma_jru_v1	interactively adjusts gamma for an 8-bit image
 Plugins>Stowers>Jay_Unruh>Trajectory Tools	search plot annotations jru v1	search_plot_annotations_jru_v1	searches plot annotations (or series numbers) and creates a new plot with the matches
+Plugins>Stowers>Jay_Unruh>Deconvolution Tools	convolve 3D	convolve_3D	convolves two 3D images with the same dimensions (requires power of 2 size in all dimensions)
+Plugins>Stowers>Jay_Unruh>Deconvolution Tools	generate rings	generate_rings	generates 2 rings in the xz plane
+Plugins>Stowers>Jay_Unruh>ICS Tools	stack real FFT jru v1	stack_real_FFT_jru_v1	does a real 2D FFT of every slice in a stack
+Plugins>Stowers>Jay_Unruh>ICS Tools	complex iFFT jru v1	complex_iFFT_jru_v1	"does a complex 2D FFT of every pair of slices in a stack (real, im, real, im, …)"
+Plugins>Stowers>Jay_Unruh>ICS Tools	stack real 3D FFT jru v1	stack_real_3D_FFT_jru_v1	does a real 3D FFT of a stack
+Plugins>Stowers>Jay_Unruh>ICS Tools	stack real 3D iFFT jru v1	stack_real_3D_iFFT_jru_v1	"does a real 3D iFFT of a stack, data is alternating real and im"
+Plugins>Stowers>Jay_Unruh>Image Tools	edf jru v1	edf_jru_v1	creates an extended depth of field image
+Plugins>Stowers>Jay_Unruh>Misc Tools	segment nucleoli jru v4	segment_nucleoli_jru_v4	high throughput nucleolar measurement with better minimum detection and measurement in a 3rd channel

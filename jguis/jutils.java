@@ -442,6 +442,50 @@ public class jutils{
 		pw.setLimits(limits);
 		return pw;
 	}
+	
+	public static Plot3D getPW3DPlotCopy(ImageWindow iw) {
+		float[][] yvals=(float[][])runPW4VoidMethod(iw,"getYValues");
+		int[][] npts=(int[][])runPW4VoidMethod(iw,"getNpts");
+		float[][][] zvals=(float[][][])runPW4VoidMethod(iw,"getZValues");
+		float[][] xvals=(float[][])runPW4VoidMethod(iw,"getXValues");
+		Object plot=runPW4VoidMethod(iw,"getPlot");
+		String[] labels=(String[])runPW4VoidMethod(iw,"getAllLabels");
+		String[] newlabels=new String[labels.length];
+		copystringarray(labels,newlabels);
+		float[] limits=(float[])runPW4VoidMethod(iw,"getLimits");
+		int[] shapes=(int[])runPW4VoidMethod(iw,"getShapes");
+		int[] colors=(int[])runPW4VoidMethod(iw,"getColors");
+		boolean[] logaxes=(boolean[])runPW4VoidMethod(iw,"getLogAxes");
+		if(plot.getClass().getName().equals("jguis.Traj3D")) {
+			float[][] newyvals=algutils.clone_multidim_array(yvals);
+			float[][] newxvals=algutils.clone_multidim_array(xvals);
+			float[][] newzvals=algutils.clone_multidim_array(zvals[0]);
+			int[] newnpts=npts[0].clone();
+			Traj3D plot2=new Traj3D(labels[1],labels[2],labels[3],newxvals,newyvals,newzvals,newnpts);
+			plot2.setLogAxes(logaxes[0],logaxes[1],logaxes[2]);
+			int[] newshapes=plot2.getShapes();
+			for(int i=0;i<newshapes.length;i++) newshapes[i]=shapes[i];
+			int[] newcolors=plot2.getColors();
+			for(int i=0;i<newcolors.length;i++) newcolors[i]=colors[i];
+			plot2.setLimits(limits);
+			return plot2;
+		} else {
+			float[][] newyvals=algutils.clone_multidim_array(yvals);
+			float[][] newxvals=algutils.clone_multidim_array(xvals);
+			float[][][] newzvals=new float[zvals.length][][];
+			int[][] newnpts=algutils.clone_multidim_array(npts);
+			for(int j=0;j<zvals.length;j++) {
+				newzvals[j]=algutils.clone_multidim_array(zvals[j]);
+			}
+			Plot3D plot2=new Plot3D(labels[1],labels[2],labels[3],newxvals,newyvals,newzvals,newnpts);
+			plot2.setLogAxes(logaxes[0],logaxes[1],logaxes[2]);
+			int[] newshapes=plot2.getShapes();
+			for(int i=0;i<newshapes.length;i++) newshapes[i]=shapes[i];
+			int[] newcolors=plot2.getColors();
+			for(int i=0;i<newcolors.length;i++) newcolors[i]=colors[i];
+			return plot2;
+		}
+	}
 
 	public static void savePW4(ImageWindow iw,String filename){
 		Class<?> temp=iw.getClass();

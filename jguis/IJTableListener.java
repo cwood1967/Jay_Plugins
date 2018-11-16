@@ -32,7 +32,7 @@ public class IJTableListener extends Panel implements ActionListener,MouseListen
 	public ImagePlus imp;
 	public TextWindow tw;
 	public int xcol,ycol,zcol;
-	public float zratio;
+	public float zratio,psize;
 
 	public static Frame launch_frame(IJTableListener panel){
 		final Frame f=new Frame("Table Listener");
@@ -71,7 +71,7 @@ public class IJTableListener extends Panel implements ActionListener,MouseListen
 		add(quit_button);
 		add(update_button);
 		tw.getTextPanel().addMouseListener(this);
-		this.xcol=xcol; this.ycol=ycol; this.zcol=zcol; this.zratio=zratio;
+		this.xcol=xcol; this.ycol=ycol; this.zcol=zcol; this.zratio=zratio; this.psize=1.0f;
 	}
 
 	public void setVisible(boolean b){
@@ -99,9 +99,9 @@ public class IJTableListener extends Panel implements ActionListener,MouseListen
 		int selStart=tp.getSelectionStart();
 		String line=tp.getLine(selStart);
 		String[] line2=table_tools.split_string_tab(line);
-		int x=(int)Float.parseFloat(line2[xcol]);
-		int y=(int)Float.parseFloat(line2[ycol]);
-		int z=(int)(Float.parseFloat(line2[zcol])/zratio);
+		int x=(int)(Float.parseFloat(line2[xcol])/psize);
+		int y=(int)(Float.parseFloat(line2[ycol])/psize);
+		int z=(int)((Float.parseFloat(line2[zcol])/zratio)/psize);
 		Roi roi=new PointRoi(x,y);
 		roi.setPosition(1,z,1);
 		imp.setRoi(roi);

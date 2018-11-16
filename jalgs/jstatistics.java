@@ -14,9 +14,9 @@ import java.util.Arrays;
 
 public class jstatistics{
 	public static final String[] stats={"Avg","Sum","Max","Min","Variance","Median","Mode","StDev","StErr","RelErr","Count","Percentile","ConditionalAvg","Not0Avg","Not0StDev","Not0StErr","Not0Sum",
-			"Not0Count","Not0Min","Identity","Zero","MaxPos","AvgPos"};
+			"Not0Count","Not0Min","Identity","Zero","MaxPos","AvgPos","NaN"};
 	public static final String[] stats2={"avg","sum","max","min","variance","median","mode","stdev","sterr","relerr","count","percentile","conditionalavg","not0avg","not0stdev","not0sterr","not0sum",
-			"not0count","not0min","identity","zero","maxpos","avgpos"};
+			"not0count","not0min","identity","zero","maxpos","avgpos","nan"};
 
 	public static float getstatistic(String stat,Object data,int width,int height,Rectangle r,float[] extras){
 		if(data instanceof float[]){
@@ -266,6 +266,9 @@ public class jstatistics{
 		if(stat.equalsIgnoreCase("avgpos")){
 			return favgpos(tempdata);
 		}
+		if(stat.equalsIgnoreCase("nan")){
+			return Float.NaN;
+		}
 		return 0.0f;
 	}
 
@@ -340,6 +343,9 @@ public class jstatistics{
 		}
 		if(stat.equalsIgnoreCase("avgpos")){
 			return savgpos(tempdata);
+		}
+		if(stat.equalsIgnoreCase("nan")){
+			return Float.NaN;
 		}
 		return 0.0f;
 	}
@@ -416,6 +422,9 @@ public class jstatistics{
 		if(stat.equalsIgnoreCase("avgpos")){
 			return iavgpos(tempdata);
 		}
+		if(stat.equalsIgnoreCase("nan")){
+			return Float.NaN;
+		}
 		return 0.0f;
 	}
 
@@ -490,6 +499,9 @@ public class jstatistics{
 		}
 		if(stat.equalsIgnoreCase("avgpos")){
 			return bavgpos(tempdata);
+		}
+		if(stat.equalsIgnoreCase("nan")){
+			return Float.NaN;
 		}
 		return 0.0f;
 	}

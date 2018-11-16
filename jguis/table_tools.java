@@ -359,6 +359,18 @@ public class table_tools{
 		}
 		return retvals;
 	}
+	
+	public static List<List<String>> table2listtable(float[][] tabdata){
+		List<List<String>> temp=new ArrayList<List<String>>();
+		for(int i=0;i<tabdata.length;i++) {
+			List<String> temp2=new ArrayList<String>();
+			for(int j=0;j<tabdata[i].length;j++) {
+				temp2.add(""+tabdata[i][j]);
+			}
+			temp.add(temp2);
+		}
+		return temp;
+	}
 
 	public static List<String> stringarray2list(String[] arr){
 		List<String> temp=new ArrayList<String>();
