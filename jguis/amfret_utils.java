@@ -67,6 +67,7 @@ public class amfret_utils implements gui_interface{
 		}
 		//System.out.println(table_tools.print_string_array(args,1));
 		String[] col_labels={"basename","datFile","Well","Plate","acceptor","c^2","Iter","baseline","amp","EC50","alpha","xshift","EC50_errs","alpha_errs","totcells","fretcells","bimodal_metric","f_gate","delta","delta_errs"};
+		//String[] col_labels={"basename","datFile","well","plate","acceptor","c^2","Iter","baseline","amp","EC50","alpha","xshift","EC50_errs","alpha_errs","totcells","fretcells","bimodal_metric","f_gate","delta","delta_errs","accstdev","nfaccmean","nfaccstdev","faccmean","faccstdev","fretmean","fretstdev"};
 		System.out.println(table_tools.print_string_array(col_labels,1));
 		float minamfret=-0.2f; float maxamfret=1.0f; int mincells=1; float mincrop=1.5f;
 		if(args.length>5) {
@@ -82,7 +83,8 @@ public class amfret_utils implements gui_interface{
 				String parent=(new File(args[0])).getParent();
 				String child=(new File(args[0])).getName();
 				List<String> output=custom.exec(parent+File.separator,child,args[1],args[2],Float.parseFloat(args[3]),Float.parseFloat(args[4]),minamfret,maxamfret,mincells,mincrop,0.02f,0.95f,false);
-				System.out.println(table_tools.print_string_array(output,1));
+				List<String> output2=output.subList(0,20); //eliminate some of the rightmost parameters
+				System.out.println(table_tools.print_string_array(output2,1));
 			} else {
 				//this is the standard operation on an entire folder
 				//args is indir, savedir, roipath, minconc, maxconc,...
@@ -94,8 +96,9 @@ public class amfret_utils implements gui_interface{
     				//assuming that indir and outdir are the same
     				List<String> output=custom.exec(args[0],fcsfiles[i],args[1],args[2],Float.parseFloat(args[3]),Float.parseFloat(args[4]),minamfret,maxamfret,mincells,mincrop,0.02f,0.95f,false);
     				if(output!=null){
-    					System.out.println(table_tools.print_string_array(output,1));
-    					b.write(table_tools.print_string_array(output,0)+"\n");
+    					List<String> output2=output.subList(0,20); //eliminate some of the rightmost parameters
+    					System.out.println(table_tools.print_string_array(output2,1));
+    					b.write(table_tools.print_string_array(output2,0)+"\n");
     				}
     			}
     			b.close();
@@ -175,7 +178,7 @@ public class amfret_utils implements gui_interface{
 			acceptor[i]=rowdata[i][acccol]/1000000.0f;
 			amfret[i]=rowdata[i][fretcol]/rowdata[i][acccol];
 		}
-		float acceptoravg=jstatistics.getstatistic("Avg",acceptor,null);
+		//float acceptoravg=jstatistics.getstatistic("Avg",acceptor,null);
 
 		//now create the 2D AmFRET histogram
 		Plot2DHist amfrethist=new Plot2DHist("Acceptor","AmFRET",acceptor,amfret,null);
@@ -186,6 +189,16 @@ public class amfret_utils implements gui_interface{
 		amfrethist.intautoscale();
 		String histname=name.substring(0,name.length()-4)+"_hist.pw2";
 		if(showplots) (new PlotWindow2DHist(histname,amfrethist)).draw();
+		
+		//get the indices of points inside the gates
+		Polygon gatepoly=rois[0].getPolygon();
+		gatepoly.translate(90,20);
+		Roi shiftroi=new PolygonRoi(gatepoly,Roi.POLYGON);
+		int[] gateindices=amfrethist.getindices(shiftroi); //these are the data indices in the non-fretting gate
+		Roi totroi=new Roi(90,20,256,256);
+		int[] plotindices=amfrethist.getindices(totroi); //these are the data indices in the entire plot
+		//now get the stats for those indices
+		float[] gatestats=getStats(acceptor,amfret,plotindices,gateindices);
 
 		//now get the acceptor histogram 99.9th percentile
 		float uplim=jstatistics.getstatistic("Percentile",acceptor,new float[]{99.9f});
@@ -204,7 +217,9 @@ public class amfret_utils implements gui_interface{
 		for(int i=0;i<histwidth;i++){
 			for(int j=0;j<histheight;j++){
 				totpop[i]+=histpix[i+j*histwidth];
-				if(!rois[0].contains(i,j)) fretpop[i]+=histpix[i+j*histwidth];
+				if(!rois[0].contains(i,j)) {
+					fretpop[i]+=histpix[i+j*histwidth];
+				}
 			}
 			totcells+=totpop[i]/16.0f; //divide by 16 because bins are 4 x 4
 			fretcells+=fretpop[i]/16.0f;
@@ -288,7 +303,7 @@ public class amfret_utils implements gui_interface{
 		double deltaerr=delta*delta*errs[2];
 
 
-		output.add(""+acceptoravg);
+		output.add(""+gatestats[0]);
 		output.add(""+(float)stats[1]);
 		output.add(""+(int)stats[0]);
 		for(int i=0;i<params.length;i++) output.add(""+(float)params[i]);
@@ -300,6 +315,13 @@ public class amfret_utils implements gui_interface{
 		output.add(""+fretfrac);
 		output.add(""+(float)delta);
 		output.add(""+(float)deltaerr);
+		output.add(""+gatestats[1]);
+		output.add(""+gatestats[2]);
+		output.add(""+gatestats[3]);
+		output.add(""+gatestats[4]);
+		output.add(""+gatestats[5]);
+		output.add(""+gatestats[6]);
+		output.add(""+gatestats[7]);
 		amfrethist.saveplot2file(outdir+histname);
 		gatefracplot.saveplot2file(outdir+gatefracplotname);
 		fitplot.saveplot2file(outdir+fitname);
@@ -308,8 +330,6 @@ public class amfret_utils implements gui_interface{
 		ColorProcessor fitcp=fitplot.getProcessor();
 		ColorProcessor overviewcp=mergeImages(amfretcp,fitcp);
 		if(drawgate) {
-    		Polygon gatepoly=rois[0].getPolygon();
-    		gatepoly.translate(90,20);
     		overviewcp.setColor(Color.yellow);
     		jutils.draw_polygon(overviewcp,gatepoly,true);
 		}
@@ -414,7 +434,7 @@ public class amfret_utils implements gui_interface{
 				acceptor[i]=rowdata[i][acccol];
 				amfret[i]=rowdata[i][fretcol];
 			}
-			float acceptoravg=jstatistics.getstatistic("Avg",acceptor,null);
+			//float acceptoravg=jstatistics.getstatistic("Avg",acceptor,null);
 
 			//now create the 2D AmFRET histogram
 			Plot2DHist amfrethist=new Plot2DHist("Acceptor","AmFRET",acceptor,amfret,null);
@@ -425,6 +445,16 @@ public class amfret_utils implements gui_interface{
 			amfrethist.intautoscale();
 			String histname=name.substring(0,name.length()-4)+"_hist.pw2";
 			if(showplots) (new PlotWindow2DHist(histname,amfrethist)).draw();
+			
+			//get the indices of points inside the gates
+			Polygon gatepoly=rois[0].getPolygon();
+			gatepoly.translate(90,20);
+			Roi shiftroi=new PolygonRoi(gatepoly,Roi.POLYGON);
+			int[] gateindices=amfrethist.getindices(shiftroi); //these are the data indices in the non-fretting gate
+			Roi totroi=new Roi(90,20,256,256);
+			int[] plotindices=amfrethist.getindices(totroi); //these are the data indices in the entire plot
+			//now get the stats for those indices
+			float[] gatestats=getStats(acceptor,amfret,plotindices,gateindices);
 
 			//now get the acceptor histogram 99.9th percentile
 			float uplim=jstatistics.getstatistic("Percentile",acceptor,new float[]{99.9f});
@@ -443,7 +473,9 @@ public class amfret_utils implements gui_interface{
 			for(int i=0;i<histwidth;i++){
 				for(int j=0;j<histheight;j++){
 					totpop[i]+=histpix[i+j*histwidth];
-					if(!rois[0].contains(i,j)) fretpop[i]+=histpix[i+j*histwidth];
+					if(!rois[0].contains(i,j)) {
+						fretpop[i]+=histpix[i+j*histwidth];
+					}
 				}
 				totcells+=totpop[i]/16.0f; //divide by 16 because bins are 4 x 4
 				fretcells+=fretpop[i]/16.0f;
@@ -526,7 +558,7 @@ public class amfret_utils implements gui_interface{
 			double delta=1.0/params[3];
 			double deltaerr=delta*delta*errs[2];
 
-			output.add(""+acceptoravg);
+			output.add(""+gatestats[0]);
 			output.add(""+(float)stats[1]);
 			output.add(""+(int)stats[0]);
 			for(int i=0;i<params.length;i++) output.add(""+(float)params[i]);
@@ -538,6 +570,13 @@ public class amfret_utils implements gui_interface{
 			output.add(""+fretfrac);
 			output.add(""+(float)delta);
 			output.add(""+(float)deltaerr);
+			output.add(""+gatestats[1]);
+			output.add(""+gatestats[2]);
+			output.add(""+gatestats[3]);
+			output.add(""+gatestats[4]);
+			output.add(""+gatestats[5]);
+			output.add(""+gatestats[6]);
+			output.add(""+gatestats[7]);
 			amfrethist.saveplot2file(outdir+histname);
 			gatefracplot.saveplot2file(outdir+gatefracplotname);
 			fitplot.saveplot2file(outdir+fitname);
@@ -546,8 +585,6 @@ public class amfret_utils implements gui_interface{
 			ColorProcessor fitcp=fitplot.getProcessor();
 			ColorProcessor overviewcp=mergeImages(amfretcp,fitcp);
 			if(drawgate) {
-	    		Polygon gatepoly=rois[0].getPolygon();
-	    		gatepoly.translate(90,20);
 	    		overviewcp.setColor(Color.yellow);
 	    		jutils.draw_polygon(overviewcp,gatepoly,true);
 			}
@@ -556,6 +593,45 @@ public class amfret_utils implements gui_interface{
 			IJ.save(overviewimp,outdir+overviewname);
 			return output;
 		}
+	
+	public float[] getStats(float[] acceptor,float[] amfret,int[] plotindices,int[] gateindices) {
+		float[] plotacc=new float[plotindices.length];
+		float[] plotamfret=new float[plotindices.length];
+		float[] gateacc=new float[gateindices.length];
+		float[] gateamfret=new float[gateindices.length];
+		for(int i=0;i<plotindices.length;i++) {
+			plotacc[i]=acceptor[plotindices[i]];
+			plotamfret[i]=amfret[plotindices[i]];
+		}
+		for(int i=0;i<gateindices.length;i++) {
+			gateacc[i]=acceptor[gateindices[i]];
+			gateamfret[i]=amfret[gateindices[i]];
+		}
+		float[] stats=new float[8]; //stats are 0accavg,1accstdev,2loweraccavg,3loweraccstdev,4upperaccavg,5upperaccstdev,6upperamfretavg,7upperamfretstdev
+		int ngate=gateindices.length;
+		int nplot=plotindices.length;
+		int nnotgate=nplot-ngate;
+		stats[0]=jstatistics.getstatistic("Avg",plotacc,null);
+		stats[1]=jstatistics.getstatistic("StDev",plotacc,null);
+		stats[2]=jstatistics.getstatistic("Avg",gateacc,null);
+		stats[3]=jstatistics.getstatistic("Stdev",gateacc,null);
+		float notgatesum=stats[0]*(float)nplot-stats[2]*(float)ngate;
+		if(nnotgate>0) stats[4]=notgatesum/(float)nnotgate;
+		float gatesumsq=(stats[3]*stats[3]+stats[2]*stats[2])*(float)ngate;
+		float totsumsq=(stats[1]*stats[1]+stats[0]*stats[0])*(float)nplot;
+		float notgatesumsq=totsumsq-gatesumsq;
+		if(nnotgate>0) stats[5]=(float)Math.sqrt(notgatesumsq/(float)nnotgate-stats[4]*stats[4]);
+		float gateamfretavg=jstatistics.getstatistic("Avg",gateamfret,null);
+		float amfretavg=jstatistics.getstatistic("Avg",gateamfret,null);
+		if(nnotgate>0) stats[6]=(amfretavg*(float)nplot-gateamfretavg*(float)ngate)/(float)nnotgate;
+		float gateamfretstdev=jstatistics.getstatistic("StDev",gateamfret,null);
+		float amfretstdev=jstatistics.getstatistic("StDev",gateamfret,null);
+		float gateamfretsumsq=(gateamfretstdev*gateamfretstdev+gateamfretavg*gateamfretavg)*(float)ngate;
+		float totamfretsumsq=(amfretstdev*amfretstdev+amfretavg*amfretavg)*(float)nplot;
+		float notgateamfretsumsq=totamfretsumsq-gateamfretsumsq;
+		if(nnotgate>0) stats[7]=(float)Math.sqrt(notgateamfretsumsq/(float)nnotgate-stats[6]*stats[6]);
+		return stats;
+	}
 
 	
 	public ColorProcessor mergeImages(ColorProcessor cp1,ColorProcessor cp2){

@@ -484,7 +484,7 @@ public class table_tools{
 	}
 	
 	public static List<List<String>> get_cell_stat_list(List<List<String>> list,int cellcolumn,String stat,boolean addct){
-		return get_cell_stat_list(list,cellcolumn,stat,false,null);
+		return get_cell_stat_list(list,cellcolumn,stat,addct,null);
 	}
 	
 	public static List<List<String>> get_cell_stat_list(List<List<String>> list,int cellcolumn,String stat,boolean addct,float[] options){

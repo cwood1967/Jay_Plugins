@@ -611,6 +611,26 @@ public class jutils{
 		}
 		return null;
 	}
+	
+	public static void setReflectionField(Object obj,String fieldname,Object value) {
+		try{
+			Class<?> temp=obj.getClass();
+			Field field=temp.getDeclaredField(fieldname);
+			field.setAccessible(true);
+			if(value instanceof Boolean) field.setBoolean(obj,((Boolean)value).booleanValue());
+			if(value instanceof Byte) field.setByte(obj,((Byte)value).byteValue());
+			if(value instanceof Short) field.setShort(obj,((Short)value).shortValue());
+			if(value instanceof Float) field.setFloat(obj,((Float)value).floatValue());
+			if(value instanceof Double) field.setDouble(obj,((Double)value).doubleValue());
+			if(value instanceof Integer) field.setInt(obj,((Integer)value).intValue());
+		}catch(NoSuchFieldException e){
+			IJ.log("no such field exception");
+		}catch(IllegalArgumentException e){
+			IJ.log("illegal argument exception");
+		}catch(IllegalAccessException e){
+			IJ.log("illegal access exception");
+		}
+	}
 
 	public static void copyfloat2dimvector(float[][] data,float[][] dest){
 		for(int i=0;i<data.length;i++){
