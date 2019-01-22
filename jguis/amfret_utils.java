@@ -595,6 +595,9 @@ public class amfret_utils implements gui_interface{
 		}
 	
 	public float[] getStats(float[] acceptor,float[] amfret,int[] plotindices,int[] gateindices) {
+		float[] stats=new float[8]; //stats are 0accavg,1accstdev,2loweraccavg,3loweraccstdev,4upperaccavg,5upperaccstdev,6upperamfretavg,7upperamfretstdev
+		if(plotindices==null || plotindices.length<1) return stats;
+		if(gateindices==null || gateindices.length<1) return stats;
 		float[] plotacc=new float[plotindices.length];
 		float[] plotamfret=new float[plotindices.length];
 		float[] gateacc=new float[gateindices.length];
@@ -607,7 +610,6 @@ public class amfret_utils implements gui_interface{
 			gateacc[i]=acceptor[gateindices[i]];
 			gateamfret[i]=amfret[gateindices[i]];
 		}
-		float[] stats=new float[8]; //stats are 0accavg,1accstdev,2loweraccavg,3loweraccstdev,4upperaccavg,5upperaccstdev,6upperamfretavg,7upperamfretstdev
 		int ngate=gateindices.length;
 		int nplot=plotindices.length;
 		int nnotgate=nplot-ngate;
