@@ -58,6 +58,7 @@ public class jreg{
 	}
 
 	public Object[] scaled_rotation_fiducials(float[][] f1,float[][] f2){
+		//the f1 and f2 matrices are ndims x npts
 		// start by calculating the centroids
 		float[] centroid1=centroidND(f1);
 		float[] centroid2=centroidND(f2);

@@ -24,13 +24,27 @@ public class traj_rescale_x_jru_v1 implements PlugIn {
 		gd.addNumericField("X_Min",xmin,5,10,null);
 		float xmax=limits[1];
 		gd.addNumericField("X_Max",xmax,5,10,null);
+		gd.addCheckbox("Log_X",false);
 		gd.showDialog(); if(gd.wasCanceled()){return;}
 		xmin=(float)gd.getNextNumber();
 		xmax=(float)gd.getNextNumber();
-		for(int i=0;i<xvals.length;i++){
-			float xinc=(xmax-xmin)/(float)(npts[i]-1);
-			for(int j=0;j<npts[i];j++){
-				xvals[i][j]=xmin+xinc*(float)j;
+		boolean logx=gd.getNextBoolean();
+		if(!logx){
+			for(int i=0;i<xvals.length;i++){
+				float xinc=(xmax-xmin)/(float)(npts[i]-1);
+				for(int j=0;j<npts[i];j++){
+					xvals[i][j]=xmin+xinc*(float)j;
+				}
+			}
+		} else {
+			float logxmin=(float)Math.log(xmin);
+			float logxmax=(float)Math.log(xmax);
+			for(int i=0;i<xvals.length;i++){
+				float logxinc=(logxmax-logxmin)/(float)(npts[i]-1);
+				for(int j=0;j<npts[i];j++){
+					float logval=logxmin+logxinc*(float)j;
+					xvals[i][j]=(float)Math.exp(logval);
+				}
 			}
 		}
 		jutils.runPW4VoidMethod(iw,"xautoscale");

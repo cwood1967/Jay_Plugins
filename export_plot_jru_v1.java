@@ -20,9 +20,11 @@ public class export_plot_jru_v1 implements PlugIn {
 		ImageWindow iw=WindowManager.getCurrentWindow();
 		String title=iw.getTitle();
 		if(!title.endsWith(".pw2")) title+=".pw2";
-		SaveDialog sd=new SaveDialog("Save Plot Object File",arg,title);
+		SaveDialog sd=new SaveDialog("Save Plot Object File",title,".pw2");
 		String dir=sd.getDirectory();
 		String name=sd.getFileName();
+		//IJ.log(name);
+		iw.setTitle(name);
 		jutils.savePW4(iw,dir+File.separator+name);
 	}
 

@@ -23,6 +23,14 @@ public class interpolation{
 		return retimage;
 	}
 	
+	public static float[] shift_line(Object line,int width,float xoff) {
+		float[] retline=new float[width];
+		for(int i=0;i<width;i++) {
+			retline[i]=interp1D(line,width,(float)i-xoff);
+		}
+		return retline;
+	}
+	
 	public static float[] affine_transform(Object image,int width,int height,double[][] trans,int newwidth,int newheight){
 		//here we transform the coordinates of the new image back to the old image
 		float[] retimage=new float[newwidth*newheight];
@@ -52,19 +60,47 @@ public class interpolation{
 	 * @param yoff
 	 */
 	public static void shift_copy_image(Object src,int srcwidth,int srcheight,float[] dest,int destwidth,int destheight,float xoff,float yoff){
-		for(int i=0;i<destheight;i++){
-			float newy=(float)i-yoff;
-			if(newy>=0.0f && newy<(float)(srcheight-1)){
-    			for(int j=0;j<destwidth;j++){
-    				float newx=(float)j-xoff;
-    				if(newx>=0.0f && newx<(float)(srcwidth-1)){
-    					dest[j+i*destwidth]=interp2D(src,srcwidth,srcheight,newx,newy);
-    				}
+		int ixoff=(int)xoff;
+		int iyoff=(int)yoff;
+		if(xoff==(float)ixoff && yoff==(float)iyoff){
+			int type=algutils.get_array_type(src);
+			for(int i=0;i<destheight;i++){
+    			int newy=i-(int)yoff;
+    			if(newy>=0 && newy<srcheight){
+        			for(int j=0;j<destwidth;j++){
+        				int newx=j-(int)xoff;
+        				if(newx>=0 && newx<srcwidth){
+        					dest[j+i*destwidth]=algutils.getArrVal(src,newx+srcwidth*newy,type);
+        				}
+        			}
     			}
-			}
+    		}
+		} else {
+    		for(int i=0;i<destheight;i++){
+    			float newy=(float)i-yoff;
+    			if(newy>=0.0f && newy<=(float)(srcheight-1)){
+        			for(int j=0;j<destwidth;j++){
+        				float newx=(float)j-xoff;
+        				if(newx>=0.0f && newx<=(float)(srcwidth-1)){
+        					dest[j+i*destwidth]=interp2D(src,srcwidth,srcheight,newx,newy);
+        				}
+        			}
+    			}
+    		}
 		}
 	}
 	
+	/*******************
+	 * here the destination can be several array types
+	 * @param src
+	 * @param srcwidth
+	 * @param srcheight
+	 * @param dest1
+	 * @param destwidth
+	 * @param destheight
+	 * @param xoff
+	 * @param yoff
+	 */
 	public static void shift_copy_image(Object src,int srcwidth,int srcheight,Object dest1,int destwidth,int destheight,float xoff,float yoff){
 		if(src instanceof int[]){
 			//this is a color image
@@ -77,17 +113,7 @@ public class interpolation{
 			algutils.copy_subarray(temp2,0,dest1,0,destwidth*destheight);
 		} else {
     		float[] dest=new float[destwidth*destheight];
-    		for(int i=0;i<destheight;i++){
-    			float newy=(float)i-yoff;
-    			if(newy>=0.0f && newy<(float)(srcheight-1)){
-        			for(int j=0;j<destwidth;j++){
-        				float newx=(float)j-xoff;
-        				if(newx>=0.0f && newx<(float)(srcwidth-1)){
-        					dest[j+i*destwidth]=interp2D(src,srcwidth,srcheight,newx,newy);
-        				}
-        			}
-    			}
-    		}
+    		shift_copy_image(src,srcwidth,srcheight,dest,destwidth,destheight,xoff,yoff);
     		int type=algutils.get_array_type(src);
     		Object temp=algutils.convert_array(dest,type);
     		algutils.copy_subarray(temp,0,dest1,0,destwidth*destheight);
@@ -414,39 +440,49 @@ public class interpolation{
 	}
 
 	public static float interp2D(Object image,int width,int height,float x,float y){
-		if(x<=0.0f){
-			return 0.0f;
-		}
-		if(x>=(width-1)){
-			return 0.0f;
-		}
-		if(y<=0.0f){
-			return 0.0f;
-		}
-		if(y>=(height-1)){
-			return 0.0f;
-		}
+		if(x<0.0f) return 0.0f;
+		if(x>(float)(width-1)) return 0.0f;
+		if(y<0.0f) return 0.0f;
+		if(y>(float)(height-1)) return 0.0f;
 		int intx=(int)x;
 		int inty=(int)y;
 		float remx=x-intx;
 		float remy=y-inty;
 		float ul,ur,ll,lr;
 		if(image instanceof short[]){
-			ul=((short[])image)[intx+width*inty]&0xffff;
-			ur=((short[])image)[intx+width*inty+1]&0xffff;
-			ll=((short[])image)[intx+width*(inty+1)]&0xffff;
-			lr=((short[])image)[intx+width*(inty+1)+1]&0xffff;
+			short[] temp=(short[])image;
+			ul=temp[intx+width*inty]&0xffff;
+			if(intx<(width-1)) ur=temp[intx+1+width*inty]&0xffff;
+			else ur=ul;
+			if(inty<(height-1)) ll=temp[intx+width*(inty+1)]&0xffff;
+			else ll=ul;
+			if(intx<(width-1) && inty<(height-1)) lr=temp[intx+1+width*(inty+1)]&0xffff;
+			else if(intx>=(width-1) && inty>=(height-1)) lr=ul;
+			else if(intx>=(width-1)) lr=ll;
+			else lr=ur;
 		}else{
 			if(image instanceof byte[]){
-				ul=((byte[])image)[intx+width*inty]&0xff;
-				ur=((byte[])image)[intx+width*inty+1]&0xff;
-				ll=((byte[])image)[intx+width*(inty+1)]&0xff;
-				lr=((byte[])image)[intx+width*(inty+1)+1]&0xff;
+				byte[] temp=(byte[])image;
+				ul=temp[intx+width*inty]&0xff;
+				if(intx<(width-1)) ur=temp[intx+1+width*inty]&0xff;
+				else ur=ul;
+				if(inty<(height-1)) ll=temp[intx+width*(inty+1)]&0xff;
+				else ll=ul;
+				if(intx<(width-1) && inty<(height-1)) lr=temp[intx+1+width*(inty+1)]&0xff;
+				else if(intx>=(width-1) && inty>=(height-1)) lr=ul;
+				else if(intx>=(width-1)) lr=ll;
+				else lr=ur;
 			}else{
-				ul=((float[])image)[intx+width*inty];
-				ur=((float[])image)[intx+width*inty+1];
-				ll=((float[])image)[intx+width*(inty+1)];
-				lr=((float[])image)[intx+width*(inty+1)+1];
+				float[] temp=(float[])image;
+				ul=temp[intx+width*inty];
+				if(intx<(width-1)) ur=temp[intx+1+width*inty];
+				else ur=ul;
+				if(inty<(height-1)) ll=temp[intx+width*(inty+1)];
+				else ll=ul;
+				if(intx<(width-1) && inty<(height-1)) lr=temp[intx+1+width*(inty+1)];
+				else if(intx>=(width-1) && inty>=(height-1)) lr=ul;
+				else if(intx>=(width-1)) lr=ll;
+				else lr=ur;
 			}
 		}
 		float interpx1=ul+remx*(ur-ul);
@@ -873,35 +909,55 @@ public class interpolation{
 		int prev=(int)end;
 		float integral=0.0f;
 		if(prev<next)
-			integral+=(end-begin)*interp1D(func,len,0.5f*(begin+end)); // we are
-		// contained
-		// within
-		// an
-		// interval
+			integral+=(end-begin)*interp1D(func,len,0.5f*(begin+end)); // we are contained within an interval
 		else{
-			integral+=(next-begin)*interp1D(func,len,0.5f*(next+begin)); // get
-			// the
-			// interval
-			// to
-			// the
-			// next
-			// point
-			integral+=(end-prev)*interp1D(func,len,0.5f*(end+prev)); // get
-			// the
-			// interval
-			// to
-			// the
-			// end
-			// point
+			integral+=(next-begin)*interp1D(func,len,0.5f*(next+begin)); // get the interval to the next point
+			integral+=(end-prev)*interp1D(func,len,0.5f*(end+prev)); // get the interval to the end point
 			for(int i=next;i<prev;i++)
-				integral+=interp1D(func,len,i+0.5f); // an all the
-			// ones in
-			// between
+				integral+=interp1D(func,len,i+0.5f); // and all the ones in between
 		}
 		if(cumulative)
 			return integral;
 		else
 			return integral/(end-begin);
+	}
+	
+	public static float[] makeMirror(float[] avgvals){
+		float[] newavgvals=new float[2*avgvals.length-1];
+		int halfsize=avgvals.length-1;
+		//int newwidth=2*avgvals.length-1;
+		//here make sure we don't replicate the center point twice
+			newavgvals[halfsize]=avgvals[0];
+			for(int j=1;j<avgvals.length;j++){
+				newavgvals[j+halfsize]=avgvals[j];
+				newavgvals[halfsize-j]=avgvals[j];
+			}
+		return newavgvals;
+	}
+	
+	public static float[] circavg(Object data,int width,int height,int rsize,float xc,float yc,boolean makeMirror1){
+		float[] circavg1=circavg(data,width,height,rsize,xc,yc);
+		if(!makeMirror1) return circavg1;
+		else return makeMirror(circavg1);
+	}
+	
+	public static float[] circavg(Object data,int width,int height,int rsize,float xc,float yc){
+		float twopi=(float)(2.0*Math.PI);
+		float[] avgvals=new float[rsize];
+		avgvals[0]=interpolation.interp2D(data,width,height,xc,yc);
+		for(int j=1;j<rsize;j++){
+			float angleincrement=1.0f/(float)j;
+			int angles=(int)(twopi/angleincrement);
+			angleincrement=twopi/(float)angles;
+			for(int k=0;k<angles;k++){
+				float angle=angleincrement*(float)k;
+				float x=(float)Math.cos(angle)*(float)j+xc;
+				float y=(float)Math.sin(angle)*(float)j+yc;
+				avgvals[j]+=interp2D(data,width,height,x,y);
+			}
+			avgvals[j]/=(float)angles;
+		}
+		return avgvals;
 	}
 	
 	public static float[][] resampleTraj(float[][] traj,float dx){

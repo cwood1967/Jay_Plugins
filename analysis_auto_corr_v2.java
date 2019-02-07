@@ -48,7 +48,7 @@ public class analysis_auto_corr_v2 implements PlugIn {
 		boolean pad=false;
 		gd.addCheckbox("Pad Trajectory?",pad);
 		gd.addCheckbox("Simple Analysis?",false);
-		int pmfreq=20000000;
+		int pmfreq=15000000;
 		gd.addNumericField("Photon Mode Freq",pmfreq,0);
 		gd.showDialog(); if(gd.wasCanceled()){return;}
 		sfreq=gd.getNextNumber();

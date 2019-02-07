@@ -35,6 +35,30 @@ public class jsobel{
 		return retvals;
 	}
 	
+	/****************
+	 * here we use a second derivative filter to get the ridges instead of edges--this doesn't work at all
+	 * @param pixels
+	 * @return
+	 */
+	public float[][] get_ridges(float[] pixels){
+		float[] xgrad=new float[width*height];
+		float[] ygrad=new float[width*height];
+		float[] gradmag=new float[width*height];
+		float[] gradangle=new float[width*height];
+		for(int i=1;i<(height-1);i++){
+			for(int j=1;j<(width-1);j++){
+				ygrad[i*width+j]=-pixels[(i+1)*width+j-1]+2.0f*pixels[(i+1)*width+j]-pixels[(i+1)*width+j+1]-2.0f*pixels[i*width+j-1]+4.0f*pixels[i*width+j]-2.0f*pixels[i*width+j+1]-pixels[(i-1)*width+j-1]+2.0f*pixels[(i-1)*width+j]-pixels[(i-1)*width+j+1];
+				xgrad[i*width+j]=-pixels[(i+1)*width+j-1]-2.0f*pixels[(i+1)*width+j]-pixels[(i+1)*width+j+1]+2.0f*pixels[i*width+j-1]+4.0f*pixels[i*width+j]+2.0f*pixels[i*width+j+1]-pixels[(i-1)*width+j-1]-2.0f*pixels[(i-1)*width+j]-pixels[(i-1)*width+j+1];
+				int temp=i*width+j;
+				float[] mag_angle=get_mag_angle(xgrad[temp],ygrad[temp]);
+				gradmag[temp]=mag_angle[0];
+				gradangle[temp]=mag_angle[1];
+			}
+		}
+		float[][] retvals={gradmag,gradangle};
+		return retvals;
+	}
+	
 	public float[][] get_gradient(float[] pixels){
 		float[] xgrad=new float[width*height];
 		float[] ygrad=new float[width*height];

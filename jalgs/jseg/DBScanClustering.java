@@ -28,7 +28,8 @@ public class DBScanClustering{
 			List<float[]> neighbors=getNeighbors(point,points);
 			if(neighbors.size()>=minPts){
 				List<float[]> cluster=new ArrayList<float[]>();
-				clusters.add(expandCluster(cluster,point,neighbors,points,visited));
+				List<float[]> temp=expandCluster(cluster,point,neighbors,points,visited);
+				clusters.add(temp);
 			} else {
 				visited.put(point,new Integer(0));
 			}
@@ -84,6 +85,32 @@ public class DBScanClustering{
 			}
 		}
 		return one;
+	}
+	
+	public static int[] getIDs(List<List<float[]>> clusters,List<float[]> points){
+		int[] ids=new int[points.size()];
+		for(int i=0;i<points.size();i++){
+			ids[i]=-1;
+			float[] point=points.get(i);
+			for(int j=0;j<clusters.size();j++){
+				List<float[]> cluster=clusters.get(j);
+				if(cluster.contains(point)){
+					ids[i]=j;
+				}
+			}
+		}
+		return ids;
+	}
+
+	public static List<float[]> arrays2list(float[][] coords){
+		//converts a ndim x npts array to a point list
+		List<float[]> ptlist=new ArrayList<float[]>();
+		for(int i=0;i<coords[0].length;i++){
+			float[] temp=new float[coords.length];
+			for(int j=0;j<coords.length;j++) temp[j]=coords[j][i];
+			ptlist.add(temp);
+		}
+		return ptlist;
 	}
 	
 }

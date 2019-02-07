@@ -390,6 +390,8 @@ public class PlotWindowHist extends ImageWindow implements ActionListener,Clipbo
 			else name+=".pw2";
 		}
 		imp.setTitle(name);
+		String dir2=directory.replace("\\","\\\\");
+		if(Recorder.record && !IJ.isMacro()) Recorder.record("run","export plot jru v1", "save=["+dir2+name+"]");
 		saveAsObject(directory+File.separator+name);
 	}
 
@@ -576,6 +578,10 @@ public class PlotWindowHist extends ImageWindow implements ActionListener,Clipbo
 	public String[] getAllLabels(){
 		String[] temp={imp.getTitle(),p3.getxLabel(),p3.getyLabel()};
 		return temp;
+	}
+	
+	public boolean getShowErrors(){
+		return false;
 	}
 
 	public String getPlotTitle(){

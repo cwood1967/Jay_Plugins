@@ -33,12 +33,16 @@ public class bin_trajectory_jru_v1 implements PlugIn {
 		float[][] newyvals=new float[yvals.length][newlength];
 		float[][] newxvals=new float[yvals.length][newlength];
 		for(int k=0;k<yvals.length;k++){
-			double xinc=((double)xvals[k][1]-(double)xvals[k][0])*(double)binby;
-			double xstart=(double)xvals[k][0];
+			//double xinc=((double)xvals[k][1]-(double)xvals[k][0])*(double)binby;
+			//double xstart=(double)xvals[k][0];
 			for(int i=0;i<newlength;i++){
-				for(int j=0;j<binby;j++){newyvals[k][i]+=yvals[k][i*binby+j];}
+				for(int j=0;j<binby;j++){
+					newyvals[k][i]+=yvals[k][i*binby+j];
+					newxvals[k][i]+=xvals[k][i*binby+j];
+				}
 				 if(!cum){newyvals[k][i]/=(float)binby;}
-				newxvals[k][i]=(float)(xinc*(double)i+xstart);
+				newxvals[k][i]/=(float)binby;
+				//newxvals[k][i]=(float)(xinc*(double)i+xstart);
 			}
 		}
 		new PlotWindow4(title+" Binned by "+binby,"x","y",newxvals,newyvals,null).draw();

@@ -15,6 +15,7 @@ import ij.gui.GenericDialog;
 import ij.gui.ImageWindow;
 import ij.io.SaveDialog;
 import ij.measure.Calibration;
+import ij.plugin.frame.Recorder;
 import ij.process.ColorProcessor;
 import ij.text.TextWindow;
 
@@ -353,6 +354,8 @@ public class PlotWindow3D extends ImageWindow implements ActionListener,Clipboar
 			else name+=".pw2";
 		}
 		imp.setTitle(name);
+		String dir2=directory.replace("\\","\\\\");
+		if(Recorder.record && !IJ.isMacro()) Recorder.record("run","export plot jru v1", "save=["+dir2+name+"]");
 		saveAsObject(directory+File.separator+name);
 	}
 
@@ -636,6 +639,11 @@ public class PlotWindow3D extends ImageWindow implements ActionListener,Clipboar
 	public float[][] getZValues(int series){
 		return p3.getZValues(series);
 	}
+	
+	public String[] getAllLabels(){
+		String[] temp={imp.getTitle(),p3.getxLabel(),p3.getyLabel(),p3.getzLabel()};
+		return temp;
+	}
 
 	public String getPlotTitle(){
 		return imp.getTitle();
@@ -667,6 +675,10 @@ public class PlotWindow3D extends ImageWindow implements ActionListener,Clipboar
 
 	public float[] getLimits(){
 		return p3.getLimits();
+	}
+	
+	public boolean[] getLogAxes() {
+		return p3.getLogAxes();
 	}
 
 	public int[] getShapes(){

@@ -32,7 +32,9 @@ public class traj_S_G_jru_v1 implements PlugIn {
 
 		//get the current image and its info
 		ImageWindow iw=WindowManager.getCurrentWindow();
-		float[] data=((float[][])jutils.runPW4VoidMethod(iw,"getYValues"))[0];
+		int sel=(Integer)jutils.runPW4VoidMethod(iw,"getSelected");
+		if(sel<0) sel=0;
+		float[] data=((float[][])jutils.runPW4VoidMethod(iw,"getYValues"))[sel];
 		slices=data.length;
 		
 		//calculate the fourier transform at each point

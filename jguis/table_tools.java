@@ -56,6 +56,16 @@ public class table_tools{
 		}
 		return list2stringarray(nonnulls);
 	}
+	
+	public static int[] wellName2RowCol(String wellname) {
+		//turns a wellname (in A1 or A01 format) to row and column numbers (base 1)
+		int slen=wellname.length();
+		if(slen>3) return new int[] {-1,-1};
+		int col=Integer.parseInt(wellname.substring(1,slen));
+		String temp=wellname.toUpperCase();
+		int row=1+(int)temp.charAt(0)-(int)('A');
+		return new int[] {row,col};
+	}
 
 	public static boolean is_number(String snumber){
 		try{
@@ -349,6 +359,18 @@ public class table_tools{
 		}
 		return retvals;
 	}
+	
+	public static List<List<String>> table2listtable(float[][] tabdata){
+		List<List<String>> temp=new ArrayList<List<String>>();
+		for(int i=0;i<tabdata.length;i++) {
+			List<String> temp2=new ArrayList<String>();
+			for(int j=0;j<tabdata[i].length;j++) {
+				temp2.add(""+tabdata[i][j]);
+			}
+			temp.add(temp2);
+		}
+		return temp;
+	}
 
 	public static List<String> stringarray2list(String[] arr){
 		List<String> temp=new ArrayList<String>();
@@ -462,10 +484,14 @@ public class table_tools{
 	}
 	
 	public static List<List<String>> get_cell_stat_list(List<List<String>> list,int cellcolumn,String stat,boolean addct){
+		return get_cell_stat_list(list,cellcolumn,stat,addct,null);
+	}
+	
+	public static List<List<String>> get_cell_stat_list(List<List<String>> list,int cellcolumn,String stat,boolean addct,float[] options){
 		List<String> celllist=get_cell_list(list,cellcolumn);
 		List<List<String>> rettable=new ArrayList<List<String>>();
 		for(int i=0;i<celllist.size();i++){
-			List<String> cellstat=get_cell_stat(list,cellcolumn,celllist.get(i),stat,addct);
+			List<String> cellstat=get_cell_stat(list,cellcolumn,celllist.get(i),stat,addct,options);
 			rettable.add(cellstat);
 		}
 		return rettable;
@@ -577,8 +603,12 @@ public class table_tools{
 	}
 	
 	public static List<String> get_cell_stat(List<List<String>> list,int cellcolumn,String cellid,String stat,boolean addct){
+		return get_cell_stat(list,cellcolumn,cellid,stat,false,null);
+	}
+	
+	public static List<String> get_cell_stat(List<List<String>> list,int cellcolumn,String cellid,String stat,boolean addct,float[] options){
 		List<List<String>> celltable=get_cell_listtable(list,cellcolumn,cellid);
-		List<String> stats=table_tools.get_table_stat(celltable,stat);
+		List<String> stats=table_tools.get_table_stat(celltable,stat,options);
 		stats.set(cellcolumn,cellid);
 		if(addct) stats.add(""+celltable.size());
 		return stats;
@@ -668,6 +698,16 @@ public class table_tools{
 			row.add(pos2,column[i]);
 		}
 	}
+	
+	public static void add_listtable_column(List<List<String>> list,float[] column,int pos){
+		for(int i=0;i<list.size();i++){
+			List<String> row=list.get(i);
+			int pos2=pos;
+			if(pos2>row.size())
+				pos2=row.size();
+			row.add(pos2,""+column[i]);
+		}
+	}
 
 	public static void delete_listtable_column(List<List<String>> list,int delcolumn){
 		for(int i=0;i<list.size();i++){
@@ -751,9 +791,12 @@ public class table_tools{
 	}
 
 	public static void create_table(String title,List<List<String>> list,String[] collabels){
-		int ncolumns=list.get(0).size();
+		int ncolumns=0;
+		if(list.size()>0) ncolumns=list.get(0).size();
+		if(ncolumns==0 && collabels!=null) ncolumns=collabels.length; //blank table
 		String[] labels=collabels;
 		if(collabels==null){
+			if(ncolumns==0) return; //empty file
 			labels=new String[ncolumns];
 			for(int i=0;i<ncolumns;i++)
 				labels[i]="col"+(i+1);
@@ -878,6 +921,8 @@ public class table_tools{
 		return retvals.toString();
 	}
 	
+	public static String[] delims= {"tab","comma","space","newline"};
+	
 	public static String get_delim(int delim){
 		String sep="\t";
 		if(delim==1) sep=",";
@@ -889,7 +934,7 @@ public class table_tools{
 	/*****************
 	 * prints a 1D arraylist with tab, comma, or space delimiting
 	 * @param data
-	 * @param delim: 0=tab,1=comma, 2=space
+	 * @param delim: 0=tab,1=comma, 2=space, 3=newline
 	 * @return
 	 */
 	public static String print_string_array(String[] data,int delim){

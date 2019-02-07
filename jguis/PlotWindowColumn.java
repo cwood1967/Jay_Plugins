@@ -14,6 +14,7 @@ import ij.gui.GenericDialog;
 import ij.gui.ImageWindow;
 import ij.gui.Roi;
 import ij.io.SaveDialog;
+import ij.plugin.frame.Recorder;
 import ij.process.ColorProcessor;
 import ij.text.TextWindow;
 
@@ -358,7 +359,7 @@ public class PlotWindowColumn extends ImageWindow implements ActionListener,Clip
 		String directory=fd.getDirectory();
 		defaultDirectory=directory;
 		fd.dispose();*/
-		SaveDialog sd=new SaveDialog("Save as Plot Object...",getTitle(),"pw2");
+		SaveDialog sd=new SaveDialog("Save as Plot Object...",getTitle(),".pw2");
 		String name=sd.getFileName();
 		String directory=sd.getDirectory();
 		if(name==null||name==""||directory==null||directory=="")
@@ -368,6 +369,8 @@ public class PlotWindowColumn extends ImageWindow implements ActionListener,Clip
 			else name+=".pw2";
 		}
 		imp.setTitle(name);
+		String dir2=directory.replace("\\","\\\\");
+		if(Recorder.record && !IJ.isMacro()) Recorder.record("run","export plot jru v1", "save=["+dir2+name+"]");
 		saveAsObject(directory+File.separator+name);
 	}
 
@@ -487,7 +490,7 @@ public class PlotWindowColumn extends ImageWindow implements ActionListener,Clip
 			showList();
 		}else{
 			if(b==save){
-				IJ.log("test");
+				//IJ.log("test");
 				GenericDialog gd=new GenericDialog("Save Options");
 				String[] savechoice={"Text","Plot Object"};
 				gd.addChoice("File Type?",savechoice,savechoice[1]);

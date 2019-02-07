@@ -33,6 +33,7 @@ public class FitDialog_v3 implements DialogListener,NLLSfitinterface_v2{
 	public float[] xvals,yvals,weights;
 	public double[][] constraints;
 	public double[] params;
+	public float[] errs;
 	public int[] fixes;
 	public float c2;
 	private TextWindow tw;
@@ -151,6 +152,26 @@ public class FitDialog_v3 implements DialogListener,NLLSfitinterface_v2{
 		TextWindow outtable=new TextWindow(title,collabels,"",400,200);
 		return outtable;
 	}
+	
+	public void append_outtable_params(String title,String label,double[] params) {
+		//this assumes the outtable has been created
+		TextWindow tw=jutils.selectTable(title);
+		tw.append(label+"\t"+c2+"\t"+iterations+"\t"+table_tools.print_double_array(params));
+	}
+	
+	public void append_outtable_errs(String title,String label) {
+		//this assumes the outtable has been created and monte carlo errors have been acquired
+		//note that the errs array has nparams+1 values with the last one being the chi squared stdev
+		if(errs!=null) {
+			TextWindow tw=jutils.selectTable(title);
+			StringBuffer sb=new StringBuffer();
+			sb.append(label+"_errs"+"\t"+errs[labels.length]+"\t"+0);
+			for(int i=0;i<labels.length;i++) {
+				sb.append("\t"+errs[i]);
+			}
+			tw.append(sb.toString());
+		}
+	}
 
 	public static TextWindow make_outtable(String title,String[] labels1){
 		String collabels="title\tc^2\tIter\t"+table_tools.print_string_array(labels1);
@@ -263,22 +284,30 @@ public class FitDialog_v3 implements DialogListener,NLLSfitinterface_v2{
 		}else{
 			StringBuffer sb=new StringBuffer();
 			sb.append("Trial\t");
+			int[] errindices=new int[labels.length+1];
+			int cnt=0;
 			for(int i=0;i<labels.length;i++){
-				if(fixes[i]==0)
+				if(fixes[i]==0) {
 					sb.append(labels[i]+"\t");
+					errindices[cnt]=i;
+					cnt++;
+				}
 			}
 			sb.append("chi^2");
+			errindices[cnt]=labels.length;
 			tw=new TextWindow("Monte Carlo Results",sb.toString(),"",400,400);
 			redirect=true;
 			monte_carlo_errors_v2 erclass=new monte_carlo_errors_v2(this,0.0001,50,false,0.1);
 			double[][] errors=erclass.geterrors(params,fixes,constraints,yvals,weights,ntrials);
 			sb=new StringBuffer();
 			sb.append("StDev\t");
+			errs=new float[labels.length+1];
 			for(int i=0;i<errors.length;i++){
 				float[] ferr=new float[errors[0].length];
 				for(int j=0;j<ferr.length;j++)
 					ferr[j]=(float)errors[i][j];
 				float stdev=jstatistics.getstatistic("StDev",ferr,null);
+				errs[errindices[i]]=stdev;
 				sb.append(""+stdev);
 				if(i<(errors.length-1))
 					sb.append("\t");

@@ -12,18 +12,25 @@ import ij.CompositeImage;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
-import ij.gui.GenericDialog;
+//import ij.gui.GenericDialog;
 import ij.io.FileSaver;
 import ij.process.ImageProcessor;
+import ij.process.LUT;
 import jalgs.algutils;
+import jalgs.jdataio;
 
+import java.awt.Color;
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Hashtable;
 
-import ome.units.UNITS;
-import ome.units.quantity.Length;
+
+
+
+//import ome.units.UNITS;
+//import ome.units.quantity.Length;
 //import org.slf4j.LoggerFactory;
 //import ch.qos.logback.classic.Level;
 //import ch.qos.logback.classic.Logger;
@@ -39,9 +46,31 @@ public class LOCI_file_reader{
 	// this plugin simply uses the loci library to open files
 	public int nseries;
 	public boolean nometa=false;
+	
+	public static void main(String[] args){
+		//the first argument should be the incoming file name
+		File f=new File(args[0]);
+		//System.out.println(args[0]);
+		LOCI_file_reader lfr=new LOCI_file_reader();
+		System.out.println(f.getParent());
+		System.out.println(f.getName());
+		ImagePlus imp=lfr.get_loci_imp_simple(f.getParent()+File.separator,f.getName(),0);
+		if(imp==null){
+			System.out.println("image did not load");
+			return;
+		}
+		FileSaver fs=new FileSaver(imp);
+		fs.saveAsTiffStack(args[1]);
+		imp.close();
+		System.out.println(args[0]+"=>"+args[1]+" complete");
+	}
 
 	public ImagePlus get_loci_imp(String directory,String fname){
 		return get_loci_imp(directory,fname,false);
+	}
+	
+	public ImagePlus get_loci_imp(String path){
+		return get_loci_imp(path,false,0,false,"");
 	}
 
 	public ImagePlus get_loci_imp(String directory,String fname,boolean outmeta){
@@ -53,9 +82,14 @@ public class LOCI_file_reader{
 	}
 	
 	public ImagePlus get_loci_imp_simple(String directory,String fname,int series){
+		return get_loci_imp_simple(directory+fname,series);
+	}
+	
+	public ImagePlus get_loci_imp_simple(String path,int series){
 		ImageProcessorReader r=new ImageProcessorReader(new ChannelSeparator(LociPrefs.makeImageReader()));
 		try{
-			r.setId(directory+fname);
+			String fname=(new File(path)).getName();
+			r.setId(path);
 			nseries=r.getSeriesCount();
 			if(series>=nseries)
 				series=0;
@@ -74,122 +108,22 @@ public class LOCI_file_reader{
 			ImagePlus imp=new ImagePlus(name,stack);
 			return imp;
 		}catch(FormatException e){
+			jdataio jdio=new jdataio();
+			System.out.println(jdio.getExceptionTrace(e));
 			return null;
 		}catch(IOException e){
+			jdataio jdio=new jdataio();
+			System.out.println(jdio.getExceptionTrace(e));
 			return null;
 		}
 	}
 	
 	public ImagePlus get_loci_imp(String directory,String fname,boolean outmeta,int series,boolean proj,String projstat,int refchan){
-		IMetadata omexmlMetadata=null;
-		if(!nometa)
-			omexmlMetadata=MetadataTools.createOMEXMLMetadata();
-		ImageProcessorReader r=new ImageProcessorReader(new ChannelSeparator(LociPrefs.makeImageReader()));
-		try{
-			if(!nometa)
-				r.setMetadataStore(omexmlMetadata);
-			r.setId(directory+fname);
-			nseries=r.getSeriesCount();
-			if(series>=nseries)
-				series=0;
-			r.setSeries(series);
-			int num=r.getImageCount(); //IJ.log("n images = "+num);
-			int width=r.getSizeX();
-			int height=r.getSizeY();
-			int channels=r.getSizeC();
-			int slices=r.getSizeZ();
-			int frames=r.getSizeT();
-			String order=r.getDimensionOrder();
-			int[] chsizes=null;
-			if(refchan>=0){
-				//here the slices is actually max slices
-				//int totslices=channels*slices*frames;
-				//int framesize=slices*(channels-1)+1;
-				chsizes=new int[channels];
-				for(int i=0;i<channels;i++) chsizes[i]=slices;
-				chsizes[refchan]=1;
-				//float newframes=(float)num/(float)framesize;
-				//frames=(int)(newframes+0.0001f);
-			}
-
-			if(outmeta&&!nometa){
-				Hashtable<String,Object> globalMeta=r.getGlobalMetadata();
-				if(globalMeta!=null)
-					dumpMetaData(globalMeta);
-				Hashtable<String,Object> seriesMeta=r.getSeriesMetadata();
-				if(seriesMeta!=null)
-					dumpMetaData(seriesMeta);
-			}
-			String name=""+fname;
-			if(nseries>1&&!nometa)
-				name=omexmlMetadata.getImageName(series);
-			else if(nseries>1)
-				name=name+series;
-			float psize=1.0f;
-			float zsize=1.0f;
-			float tsize=1.0f;
-			if(!nometa){
-				//Length temp=new Length(1.0,UNITS.MICROM);
-				if(omexmlMetadata.getPixelsPhysicalSizeX(series)!=null)
-					psize=omexmlMetadata.getPixelsPhysicalSizeX(series).value().floatValue();
-				if(omexmlMetadata.getPixelsPhysicalSizeZ(series)!=null)
-					zsize=omexmlMetadata.getPixelsPhysicalSizeZ(series).value().floatValue();
-				if(omexmlMetadata.getPixelsTimeIncrement(series)!=null)
-					tsize=omexmlMetadata.getPixelsTimeIncrement(series).value().floatValue();
-			}
-			ImageStack stack=new ImageStack(width,height);
-			if(proj){
-				int counter=0;
-				for(int i=0;i<frames;i++){
-					for(int j=0;j<channels;j++){
-						Object[] tempzstack=new Object[slices];
-						for(int k=0;k<slices;k++){
-							int index=get_stack_index(j,k,i,channels,slices,frames,order,chsizes);
-							ImageProcessor ip=r.openProcessors(index)[0];
-							tempzstack[k]=ip.getPixels();
-						}
-						Object projslice=algutils.get_stack_proj_stat(projstat,tempzstack,width,height,slices,null);
-						stack.addSlice("",projslice);
-						IJ.showProgress(counter,frames*channels);
-						counter++;
-					}
-				}
-				slices=1;
-			}else{
-				int counter=0;
-				for(int i=0;i<frames;i++){
-					for(int j=0;j<slices;j++){
-						for(int k=0;k<channels;k++){
-							int index=get_stack_index(k,j,i,channels,slices,frames,order,chsizes);
-							//IJ.log(""+k+"\t "+j+"\t "+i+"\t "+index);
-							ImageProcessor ip=r.openProcessors(index)[0];
-							stack.addSlice(ip);
-							IJ.showProgress(counter,frames*slices*channels);
-							counter++;
-						}
-					}
-				}
-			}
-			r.close();
-			// shuffle(stack,channels,slices,frames,order);
-			ImagePlus imp=new ImagePlus(name,stack);
-			if(!nometa){
-				jutils.set_psize(imp,psize);
-				jutils.set_pdepth(imp,zsize);
-				jutils.set_pinterval(imp,tsize);
-			}
-			imp.setOpenAsHyperStack(true);
-			imp.setDimensions(channels,slices,frames);
-			if(channels>1){
-				return new CompositeImage(imp,CompositeImage.COLOR);
-			}else{
-				return imp;
-			}
-		}catch(FormatException e){
-			return null;
-		}catch(IOException e){
-			return null;
-		}
+		return get_loci_imp(directory+fname,outmeta,series,proj,projstat,refchan);
+	}
+	
+	public ImagePlus get_loci_imp(String path,boolean outmeta,int series,boolean proj,String projstat,int refchan){
+		return get_loci_subimp(path,outmeta,series,proj,projstat,refchan,null);
 	}
 	
 	/************
@@ -205,6 +139,22 @@ public class LOCI_file_reader{
 	 * @return
 	 */
 	public ImagePlus get_loci_subimp(String directory,String fname,boolean outmeta,int series,boolean proj,String projstat,int refchan,int[] limits){
+		return get_loci_subimp(directory+fname,outmeta,series,proj,projstat,refchan,limits);
+	}
+	
+	/************
+	 * this version collects a subset of channels, slices, and frames
+	 * @param directory
+	 * @param fname
+	 * @param outmeta
+	 * @param series
+	 * @param proj
+	 * @param projstat
+	 * @param refchan
+	 * @param limits: an int array with minch,maxch,minz,maxz,mint,maxt (0 based)
+	 * @return
+	 */
+	public ImagePlus get_loci_subimp(String path,boolean outmeta,int series,boolean proj,String projstat,int refchan,int[] limits){
 		IMetadata omexmlMetadata=null;
 		if(!nometa)
 			omexmlMetadata=MetadataTools.createOMEXMLMetadata();
@@ -212,7 +162,8 @@ public class LOCI_file_reader{
 		try{
 			if(!nometa)
 				r.setMetadataStore(omexmlMetadata);
-			r.setId(directory+fname);
+			String fname=(new File(path)).getName();
+			r.setId(path);
 			nseries=r.getSeriesCount();
 			if(series>=nseries)
 				series=0;
@@ -238,11 +189,15 @@ public class LOCI_file_reader{
 
 			if(outmeta&&!nometa){
 				Hashtable<String,Object> globalMeta=r.getGlobalMetadata();
-				if(globalMeta!=null)
+				if(globalMeta!=null){
+					IJ.log("Global Metadata");
 					dumpMetaData(globalMeta);
+				}
 				Hashtable<String,Object> seriesMeta=r.getSeriesMetadata();
-				if(seriesMeta!=null)
+				if(seriesMeta!=null){
+					IJ.log("Series Metadata");
 					dumpMetaData(seriesMeta);
+				}
 			}
 			String name=""+fname;
 			if(nseries>1&&!nometa)
@@ -261,6 +216,9 @@ public class LOCI_file_reader{
 				if(omexmlMetadata.getPixelsTimeIncrement(series)!=null)
 					tsize=omexmlMetadata.getPixelsTimeIncrement(series).value().floatValue();
 			}
+			if(limits==null){
+				limits=new int[]{-1,-1,-1,-1,-1,-1};
+			}
 			if(limits[0]<0) limits[0]=0;
 			if(limits[1]<0 || limits[1]>=channels) limits[1]=channels-1;
 			if(limits[2]<0) limits[2]=0;
@@ -270,24 +228,29 @@ public class LOCI_file_reader{
 			int tempslices=limits[3]-limits[2]+1;
 			int tempframes=limits[5]-limits[4]+1;
 			int tempchannels=limits[1]-limits[0]+1;
+			Object[] luts=new Object[channels];
 			ImageStack stack=new ImageStack(width,height);
 			if(proj){
 				int counter=0;
 				for(int i=limits[4];i<=limits[5];i++){
 					for(int j=limits[0];j<=limits[1];j++){
-						Object[] tempzstack=new Object[slices];
+						Object[] tempzstack=new Object[tempslices];
 						for(int k=limits[2];k<=limits[3];k++){
 							int index=get_stack_index(j,k,i,channels,slices,frames,order,chsizes);
 							ImageProcessor ip=r.openProcessors(index)[0];
-							tempzstack[k]=ip.getPixels();
+							tempzstack[k-limits[2]]=ip.getPixels();
 						}
 						Object projslice=algutils.get_stack_proj_stat(projstat,tempzstack,width,height,tempslices,null);
 						stack.addSlice("",projslice);
+						if(luts[j]==null){
+							luts[j]=r.get8BitLookupTable();
+							if(luts[j]==null) luts[j]=r.get16BitLookupTable();
+						}
 						IJ.showProgress(counter,tempframes*tempchannels);
 						counter++;
 					}
 				}
-				slices=1;
+				tempslices=1;
 			}else{
 				int counter=0;
 				for(int i=limits[4];i<=limits[5];i++){
@@ -297,6 +260,10 @@ public class LOCI_file_reader{
 							//IJ.log(""+k+"\t "+j+"\t "+i+"\t "+index);
 							ImageProcessor ip=r.openProcessors(index)[0];
 							stack.addSlice(ip);
+							if(luts[k]==null){
+								luts[k]=r.get8BitLookupTable();
+								if(luts[k]==null) luts[k]=r.get16BitLookupTable();
+							}
 							IJ.showProgress(counter,tempframes*tempslices*tempchannels);
 							counter++;
 						}
@@ -304,6 +271,23 @@ public class LOCI_file_reader{
 				}
 			}
 			r.close();
+			LUT[] luts2=new LUT[channels];
+			for(int i=0;i<channels;i++){
+				if(luts[i]==null){
+					luts2=null;
+					break;
+				}
+				//here assuming luts is a byte or a short
+				if(luts[i] instanceof byte[][]){
+					luts2[i]=new LUT(((byte[][])luts[i])[0],((byte[][])luts[i])[1],((byte[][])luts[i])[2]);
+				} else {
+					byte[][] temp=new byte[3][];
+					temp[0]=algutils.convert_arr_byte(((Object[])luts[i])[0]);
+					temp[1]=algutils.convert_arr_byte(((Object[])luts[i])[1]);
+					temp[2]=algutils.convert_arr_byte(((Object[])luts[i])[2]);
+					luts2[i]=new LUT(temp[0],temp[1],temp[2]);
+				}
+			}
 			// shuffle(stack,channels,slices,frames,order);
 			ImagePlus imp=new ImagePlus(name,stack);
 			if(!nometa){
@@ -314,7 +298,9 @@ public class LOCI_file_reader{
 			imp.setOpenAsHyperStack(true);
 			imp.setDimensions(tempchannels,tempslices,tempframes);
 			if(tempchannels>1){
-				return new CompositeImage(imp,CompositeImage.COLOR);
+				CompositeImage ci=new CompositeImage(imp,CompositeImage.COLOR);
+				if(luts2!=null) ci.setLuts(luts2);
+				return ci;
 			}else{
 				return imp;
 			}
@@ -327,6 +313,10 @@ public class LOCI_file_reader{
 
 	public ImagePlus get_loci_imp(String directory,String fname,boolean outmeta,int series,boolean proj,String projstat){
 		return get_loci_imp(directory,fname,outmeta,series,proj,projstat,-1);
+	}
+	
+	public ImagePlus get_loci_imp(String path,boolean outmeta,int series,boolean proj,String projstat){
+		return get_loci_imp(path,outmeta,series,proj,projstat,-1);
 	}
 
 	public ImagePlus get_loci_imp_tile(String directory,String fname,boolean outmeta,int series,int xtiles,int ytiles){
@@ -370,6 +360,7 @@ public class LOCI_file_reader{
 			float psize=1.0f;
 			float zsize=1.0f;
 			float tsize=1.0f;
+			//omexmlMetadata.getObjectiveImmersion(0,0);
 			if(!nometa){
 				if(omexmlMetadata.getPixelsPhysicalSizeX(series)!=null)
 					psize=omexmlMetadata.getPixelsPhysicalSizeX(series).value().floatValue();
@@ -463,6 +454,40 @@ public class LOCI_file_reader{
 		}
 	}
 	
+	public String[][] getOMEXMLObjectiveInfo(String directory,String fname,int series){
+		//here we get selected info about the objective from the omexmlmetadata
+		IMetadata omexmlMetadata=MetadataTools.createOMEXMLMetadata();
+		ImageProcessorReader r=new ImageProcessorReader(new ChannelSeparator(LociPrefs.makeImageReader()));
+		try{
+			r.setMetadataStore(omexmlMetadata);
+			r.setId(directory+fname);
+			nseries=r.getSeriesCount();
+			if(series>=nseries) series=0;
+			r.setSeries(series);
+			String[][] objinfo=new String[7][2];
+			objinfo[0][0]="Correction";
+			objinfo[0][1]=omexmlMetadata.getObjectiveCorrection(0,0).toString();
+			objinfo[1][0]="Immersion";
+			objinfo[1][1]=omexmlMetadata.getObjectiveImmersion(0,0).toString();
+			objinfo[2][0]="LensNA";
+			objinfo[2][1]=omexmlMetadata.getObjectiveLensNA(0,0).toString();
+			objinfo[3][0]="NominalMagnification";
+			objinfo[3][1]=omexmlMetadata.getObjectiveNominalMagnification(0,0).toString();
+			objinfo[4][0]="Manufacturer";
+			objinfo[4][1]=omexmlMetadata.getObjectiveManufacturer(0,0).toString();
+			objinfo[5][0]="Model";
+			objinfo[5][1]=omexmlMetadata.getObjectiveModel(0,0).toString();
+			objinfo[6][0]="WorkingDistance";
+			objinfo[6][1]=omexmlMetadata.getObjectiveWorkingDistance(0,0).toString();
+			r.close();
+			return objinfo;
+		}catch(FormatException e){
+			return null;
+		}catch(IOException e){
+			return null;
+		}
+	}
+	
 	public Hashtable<String,Object> getSeriesMetaData(String directory,String fname,int series){
 		IMetadata omexmlMetadata=MetadataTools.createOMEXMLMetadata();
 		ImageProcessorReader r=new ImageProcessorReader(new ChannelSeparator(LociPrefs.makeImageReader()));
@@ -524,25 +549,8 @@ public class LOCI_file_reader{
 	}
 	
 	public String[] batch_get_series_metadata_value(String directory,String fname,String key){
-		IMetadata omexmlMetadata=MetadataTools.createOMEXMLMetadata();
-		ImageProcessorReader r=new ImageProcessorReader(new ChannelSeparator(LociPrefs.makeImageReader()));
-		try{
-			r.setMetadataStore(omexmlMetadata);
-			r.setId(directory+fname);
-			nseries=r.getSeriesCount();
-			String[] vals=new String[nseries];
-			for(int i=0;i<nseries;i++){
-				r.setSeries(i);
-				Hashtable<String,Object> seriesMeta=r.getSeriesMetadata();
-				vals[i]=seriesMeta.get(key).toString();
-			}
-			r.close();
-			return vals;
-		}catch(FormatException e){
-			return null;
-		}catch(IOException e){
-			return null;
-		}
+		String[] keys={key};
+		return batch_get_series_metadata_value(directory,fname,keys)[0];
 		//return null;
 	}
 	
@@ -554,10 +562,15 @@ public class LOCI_file_reader{
 			r.setId(directory+fname);
 			nseries=r.getSeriesCount();
 			String[][] vals=new String[key.length][nseries];
+			Hashtable<String,Object> globalMeta=r.getGlobalMetadata();
 			for(int i=0;i<nseries;i++){
 				r.setSeries(i);
 				Hashtable<String,Object> seriesMeta=r.getSeriesMetadata();
-				for(int j=0;j<key.length;j++) vals[j][i]=seriesMeta.get(key[j]).toString();
+				for(int j=0;j<key.length;j++){
+					Object temp=seriesMeta.get(key[j]);
+					if(temp==null) globalMeta.get(key[j]);
+					if(temp!=null) vals[j][i]=temp.toString();
+				}
 			}
 			r.close();
 			return vals;

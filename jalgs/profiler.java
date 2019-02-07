@@ -10,6 +10,8 @@ package jalgs;
 
 import java.awt.Polygon;
 
+import jalgs.jseg.measure_object;
+
 public class profiler{
 	// here we have static methods to generate line and polyline thick profiles
 
@@ -24,7 +26,7 @@ public class profiler{
 			length+=linelength;
 		}
 		if(connected){
-			length+=(int)Math.sqrt((xvals[nlines-1]-xvals[0])*(xvals[nlines-1]-xvals[0])+(yvals[nlines-1]-yvals[0])*(yvals[nlines-1]-yvals[0]))-1;
+			length+=(int)Math.sqrt((xvals[nlines]-xvals[0])*(xvals[nlines]-xvals[0])+(yvals[nlines]-yvals[0])*(yvals[nlines]-yvals[0]))-1;
 		}else{
 			length+=1;
 		}
@@ -40,7 +42,7 @@ public class profiler{
 			length+=linelength;
 		}
 		if(connected){
-			length+=(int)get3DLength(new float[]{xvals[nlines-1],yvals[nlines-1],zvals[nlines-1],xvals[0],yvals[0],zvals[0]})-1;
+			length+=(int)get3DLength(new float[]{xvals[nlines],yvals[nlines],zvals[nlines],xvals[0],yvals[0],zvals[0]})-1;
 		}else{
 			length+=1;
 		}
@@ -97,7 +99,7 @@ public class profiler{
 			counter+=(templength-1);
 		}
 		if(connected){
-			float[] coords={xvals[nlines-1],yvals[nlines-1],xvals[0],yvals[0]};
+			float[] coords={xvals[nlines],yvals[nlines],xvals[0],yvals[0]};
 			int templength=0;
 			int tempoutsign=outsign(polyroi,coords);
 			for(int j=0;j<linewidth;j++){
@@ -176,7 +178,7 @@ public class profiler{
 			counter+=(templength-1);
 		}
 		if(connected){
-			float[] coords={xvals[nlines-1],yvals[nlines-1],xvals[0],yvals[0]};
+			float[] coords={xvals[nlines],yvals[nlines],xvals[0],yvals[0]};
 			int templength=0;
 			int tempoutsign=outsign(xvals,yvals,coords);
 			for(int j=0;j<linewidth;j++){
@@ -244,6 +246,7 @@ public class profiler{
 				for(int k=0;k<templength-1;k++){
 					profile[counter+k]+=tempfloat[k]/linewidth;
 				}
+				//add on the final point if the profile is not connected
 				if(i==(nlines-1)&&!connected && tempfloat.length>1){
 					profile[counter+templength-1]+=tempfloat[templength-1]/linewidth;
 				}
@@ -251,7 +254,7 @@ public class profiler{
 			counter+=(templength-1);
 		}
 		if(connected){
-			float[] coords={xvals[nlines-1],yvals[nlines-1],xvals[0],yvals[0]};
+			float[] coords={xvals[nlines],yvals[nlines],xvals[0],yvals[0]};
 			int templength=0;
 			int tempoutsign=outsign(polyroi,coords);
 			for(int j=0;j<linewidth;j++){
@@ -313,7 +316,7 @@ public class profiler{
 			counter+=(templength-1);
 		}
 		if(connected){
-			float[] coords={xvals[nlines-1],yvals[nlines-1],xvals[0],yvals[0]};
+			float[] coords={xvals[nlines],yvals[nlines],xvals[0],yvals[0]};
 			int templength=0;
 			int tempoutsign=outsign(xvals,yvals,coords);
 			for(int j=0;j<linewidth;j++){
@@ -567,6 +570,73 @@ public class profiler{
 		oc[2]=distance*xinc+coords[2];
 		oc[3]=distance*yinc+coords[3];
 		return oc;
+	}
+	
+	/*********************
+	 * this plugin rotates a profile from its current vector to the z axis vector
+	 * @param stack: the source image stack
+	 * @param width: width of stack
+	 * @param height: height of stack
+	 * @param center: the point about which rotation occurs
+	 * @param zratio: ratio of zres to xyres
+	 * @param currvec: the current vector from the center point 
+	 * @param newsize: the size (xy) of the rotated image
+	 * @param zshift: the shift of the start of the stack "below" the vertex in xy units
+	 * @param zsize: the size of the stack in xy units
+	 * @return
+	 */
+	public static float[][] getRotated3DImage(Object[] stack,int width,int height,float[] center,float zratio,float[] currvec,int newsize,float zshift,int zsize){
+		float[] zvec= {0.0f,0.0f,1.0f};
+		//get the inner angle with the z axis
+		float angle=measure_object.get_inner_angle(zvec,currvec);
+		//the cross product will give us the axis to rotate about
+		float[] crossprod=measure_object.crossProd(zvec,currvec);
+		//normalize the cross product
+		crossprod=measure_object.norm_vector(crossprod);
+		float[][] rotmat=measure_object.getRotationMatrix(crossprod,angle);
+		return getRotated3DImage(stack,width,height,center,zratio,rotmat,newsize,zshift,zsize);
+	}
+	
+	/*************
+	 * this plugin does the 3D realignment more robustly via a rotation matrix and interpolation
+	 * @param stack: the source image stack
+	 * @param width: width of stack
+	 * @param height: height of stack
+	 * @param center: the point about which rotation occurs
+	 * @param zratio: ratio of zres to xyres
+	 * @param rotmat: the 3 x 3 rotation matrix
+	 * @param newsize: the size of the rotated image
+	 * @param zshift: the shift of the start of the stack "below" the vertex in xy units
+	 * @param zsize: the size of the stack in xy units
+	 * @return
+	 */
+	public static float[][] getRotated3DImage(Object[] stack,int width,int height,float[] center,float zratio,float[][] rotmat,int newsize,float zshift,int zsize){
+		//build a rotated image by rotating each voxel to its position in the original image and interpolating
+		int rotsize=newsize;
+		//int rotheight=4*rotsize;
+		int rotheight=zsize;
+		float[][] rotated=new float[rotheight][rotsize*rotsize];
+		for(int i=0;i<rotheight;i++){
+			float zpos=(float)(i-zshift);
+			for(int j=0;j<rotsize;j++){
+				float ypos=(float)(j-rotsize/2);
+				for(int k=0;k<rotsize;k++){
+					float xpos=(float)(k-rotsize/2);
+					//multiply by the rotation matrix to transform in the old coordinates
+					float xoff=rotmat[0][0]*xpos+rotmat[0][1]*ypos+rotmat[0][2]*zpos;
+					float yoff=rotmat[1][0]*xpos+rotmat[1][1]*ypos+rotmat[1][2]*zpos;
+					float zoff=rotmat[2][0]*xpos+rotmat[2][1]*ypos+rotmat[2][2]*zpos;
+					//correct for anisotropic resolution
+					zoff/=zratio;
+					//add the vertex position back
+					xoff+=center[0]; yoff+=center[1]; zoff+=(center[2]/zratio);
+					//if(i==0 && j==0 && k==0) IJ.log(""+xoff+" , "+yoff+" , "+zoff);
+					//finally interpolate the original image at these points
+					rotated[i][k+j*rotsize]=interpolation.interp3D(stack,width,height,xoff,yoff,zoff);
+				}
+			}
+		}
+		return rotated;
 	}
 
 }

@@ -133,7 +133,9 @@ public class DV_file_reader{
 			ipix[i/2]=combined[i+1];
 		}
 		ImageProcessor ip3=new FloatProcessor(getWidth(),getHeight(),rpix,null);
+		ip3.flipVertical();
 		ImageProcessor ip4=new FloatProcessor(getWidth(),getHeight(),ipix,null);
+		ip4.flipVertical();
 		return new ImageProcessor[]{ip3,ip4};
 	}
 
@@ -151,7 +153,9 @@ public class DV_file_reader{
 		fi.offset=oldoffset;
 		fi.nImages=oldnImages;
 		fi.longOffset=oldlongOffset;
-		return timp.getProcessor();
+		ImageProcessor tip=timp.getProcessor();
+		tip.flipVertical();
+		return tip;
 	}
 
 	public int map_slice_number(int stackslice){

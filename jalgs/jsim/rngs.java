@@ -182,6 +182,14 @@ public class rngs{
 		}
 		return temp;
 	}
+	
+	public double[] random_sphere(double radius) {
+		double[] vec = random_3D_vector();
+    	vec[0]*=radius;
+    	vec[1]*=radius;
+    	vec[2]*=radius;
+    	return vec;
+	}
 
 	public double[] random_3D_vector(){
 		double[] temp={unidev(1.0,-1.0),unidev(1.0,-1.0),unidev(1.0,-1.0)};
@@ -235,6 +243,17 @@ public class rngs{
 	public int[] random_order(int length){
 		float[] temp=random_arrayf(length,0.0f,1.0f);
 		return jsort.get_javasort_order(temp);
+	}
+	
+	public float[] random_fractions(int ncat){
+		float[] fractions=new float[ncat];
+		float sum=0.0f;
+		for(int i=0;i<ncat;i++){
+			fractions[i]=(float)unidev(1.0,0.0);
+			sum+=fractions[i];
+		}
+		for(int i=0;i<ncat;i++) fractions[i]/=sum;
+		return fractions;
 	}
 
 }

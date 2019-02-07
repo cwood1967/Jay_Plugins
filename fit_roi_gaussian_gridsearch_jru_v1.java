@@ -185,9 +185,9 @@ public class fit_roi_gaussian_gridsearch_jru_v1 implements PlugIn, NLLSfitinterf
 					tw.append(""+(float)ampoffset[1]+"\t"+(float)ampoffset[0]+"\t"+(float)params[0]+"\t"+((float)params[1]+xoff)+"\t"+((float)params[2]+yoff)+"\t"+(float)(maxslice)+"\t"+rcolor+"\n");
 				} else {
 					if(tw==null){
-						tw=new TextWindow("Gaussian_Output","baseline\tamplitude\tstdev\txc\tyc\tzslice","",400,200);
+						tw=new TextWindow("Gaussian_Output","baseline\tamplitude\tstdev\txc\tyc\tzslice\tc2","",400,200);
 					}
-					tw.append(""+(float)ampoffset[1]+"\t"+(float)ampoffset[0]+"\t"+(float)params[0]+"\t"+((float)params[1]+xoff)+"\t"+((float)params[2]+yoff)+"\t"+(float)(maxslice)+"\n");
+					tw.append(""+(float)ampoffset[1]+"\t"+(float)ampoffset[0]+"\t"+(float)params[0]+"\t"+((float)params[1]+xoff)+"\t"+((float)params[2]+yoff)+"\t"+(float)(maxslice)+"\t"+(float)stats[1]+"\n");
 				}
 			}
 		} else {

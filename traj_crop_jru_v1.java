@@ -19,6 +19,7 @@ public class traj_crop_jru_v1 implements PlugIn {
 		PlotWindow4 pw=jutils.getPW4Copy(iw);
 		float[][] yvals=pw.getYValues();
 		float[][] xvals=pw.getXValues();
+		float[][][] errs=pw.getErrors();
 		int[] npts=pw.getNpts();
 		int length=npts[0];
 		GenericDialog gd=new GenericDialog("Options");
@@ -41,19 +42,30 @@ public class traj_crop_jru_v1 implements PlugIn {
 		int newlength=counter2-counter1+1;
 		float[][] newxvals=new float[xvals.length][newlength];
 		float[][] newyvals=new float[xvals.length][newlength];
+		float[][][] newerrs=null;
+		if(errs!=null) newerrs=new float[2][xvals.length][newlength];
 		for(int j=0;j<xvals.length;j++){
 			if((counter1+newlength)>npts[j]){
 				newxvals[j]=new float[npts[j]-counter1];
 				newyvals[j]=new float[npts[j]-counter1];
+				if(errs!=null){
+					newerrs[0][j]=new float[npts[j]-counter1];
+					newerrs[1][j]=new float[npts[j]-counter1];
+				}
 			}
 			for(int i=0;i<newlength;i++){
 				if((counter1+i)<npts[j]){
 					newxvals[j][i]=xvals[j][counter1+i];
 					newyvals[j][i]=yvals[j][counter1+i];
+					if(errs!=null){
+						newerrs[0][j][i]=errs[0][j][counter1+i];
+						newerrs[1][j][i]=errs[1][j][counter1+i];
+					}
 				}
 			}
 			pw.updateSeries(newxvals[j],newyvals[j],j,true);
 		}
+		pw.addErrors(newerrs);
 	}
 
 }

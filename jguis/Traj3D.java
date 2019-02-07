@@ -17,6 +17,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.List;
 
 public class Traj3D extends Plot3D{
 	// here we have a single zValue per xy value
@@ -119,6 +120,53 @@ public class Traj3D extends Plot3D{
 		roty=0.0;
 		rotz=-45.0;
 	}
+	
+	public Traj3D(String xLabel1,String yLabel1,String zLabel1,List<List<float[]>> points){
+		super();
+		maxxpts=0;
+		npts=new int[points.size()];
+		for(int i=0;i<points.size();i++){
+			npts[i]=points.get(i).size();
+			if(npts[i]>maxxpts) maxxpts=npts[i];
+		}
+		nseries=npts.length;
+		xValues=new float[npts.length][maxxpts];
+		yValues=new float[npts.length][maxxpts];
+		zValues=new float[npts.length][maxxpts];
+		for(int i=0;i<points.size();i++){
+			List<float[]> series=points.get(i);
+			for(int j=0;j<series.size();j++){
+				float[] coords=series.get(j);
+				xValues[i][j]=coords[0]; yValues[i][j]=coords[1]; zValues[i][j]=coords[2];
+			}
+		}
+		xLabel=xLabel1;
+		yLabel=yLabel1;
+		zLabel=zLabel1;
+		
+		float[] temp=findminmax(xValues,npts);
+		xMin=temp[0];
+		xMax=temp[1];
+		temp=findminmax(yValues,npts);
+		yMin=temp[0];
+		yMax=temp[1];
+		temp=findminmax(zValues,npts);
+		zMin=temp[0];
+		zMax=temp[1];
+		logx=false;
+		logy=false;
+		logz=false;
+		shapes=new int[nseries];
+		colors=new int[nseries];
+		for(int i=0;i<nseries;i++){
+			colors[i]=i;
+		}
+		selected=-1;
+		rotx=-60.0;
+		roty=0.0;
+		rotz=-45.0;
+	}
+	
 
 	public Traj3D(InputStream is){
 		init_from_is(is);

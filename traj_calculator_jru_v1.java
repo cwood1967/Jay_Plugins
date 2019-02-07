@@ -15,12 +15,14 @@ import jguis.*;
 public class traj_calculator_jru_v1 implements PlugIn {
 
 	public void run(String arg) {
-		String[] operations=new String[5];
+		String[] operations=new String[7];
 		operations[0]="add";
 		operations[1]="subtract";
 		operations[2]="multiply";
-		operations[3]="divide by";
-		operations[4]="to the power";
+		operations[3]="divide_by";
+		operations[4]="to_the_power";
+		operations[5]="sub_from";
+		operations[6]="divided_from";
 
 		Object[] windowList=jutils.getPlotWindowList(false);
 		String[] titles=(String[])windowList[1];
@@ -69,13 +71,17 @@ public class traj_calculator_jru_v1 implements PlugIn {
 		if(opindex==2){for(int i=0;i<length1;i++){retyvals[i]=yvals1[i]*yvals2[i];}}
 		if(opindex==3){for(int i=0;i<length1;i++){retyvals[i]=yvals1[i]/yvals2[i];}}
 		if(opindex==4){for(int i=0;i<length1;i++){retyvals[i]=(float)Math.pow(yvals1[i],yvals2[i]);}}
+		if(opindex==5){for(int i=0;i<length1;i++){retyvals[i]=yvals2[i]-yvals1[i];}}
+		if(opindex==6){for(int i=0;i<length1;i++){retyvals[i]=yvals2[i]/yvals1[i];}}
 		String operator="";
 		if(opindex==0){operator="+";}
-		if(opindex==1){operator="-";}
+		if(opindex==1 || opindex==5){operator="-";}
 		if(opindex==2){operator="*";}
-		if(opindex==3){operator="/";}
+		if(opindex==3 || opindex==6){operator="/";}
 		if(opindex==4){operator="^";}
-		PlotWindow4 newpw=new PlotWindow4(title1+operator+title2,"x","y",retxvals,retyvals);
+		PlotWindow4 newpw=null;
+		if(opindex<5) newpw=new PlotWindow4(title1+operator+title2,"x","y",retxvals,retyvals);
+		else newpw=new PlotWindow4(title2+operator+title1,"x","y",retxvals,retyvals);
 		newpw.draw();
 	}
 

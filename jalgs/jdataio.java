@@ -95,7 +95,8 @@ public class jdataio{
 	}
 
 	public String[] get_sorted_string_list(String directory,String mask){
-		return get_sorted_string_list(directory,new String[]{mask},null);
+		if(mask!=null) return get_sorted_string_list(directory,new String[]{mask},null);
+		else return get_sorted_string_list(directory,null,null);
 	}
 
 	public String[] get_datemod_sorted_string_list(String directory,String mask){
@@ -131,6 +132,10 @@ public class jdataio{
 		//this is the master masking method
 		String[] names=(new File(directory)).list();
 		ArrayList<String> namelist=new ArrayList<String>();
+		if(masks==null && notmasks==null) {
+			for(int i=0;i<names.length;i++) namelist.add(names[i]);
+			return namelist;
+		}
 		int nmask=0;
 		for(int i=0;i<names.length;i++){
 			boolean invalidated=false;
@@ -264,6 +269,31 @@ public class jdataio{
 		}
 		return true;
 	}
+	
+	public boolean writeintellong(OutputStream outstream,long data) {
+		try{
+			byte[] dumbyte=new byte[8];
+			dumbyte[0]=(byte)data;
+			dumbyte[1]=(byte)(data>>8);
+			dumbyte[2]=(byte)(data>>16);
+			dumbyte[3]=(byte)(data>>24);
+			dumbyte[4]=(byte)(data>>32);
+			dumbyte[5]=(byte)(data>>40);
+			dumbyte[6]=(byte)(data>>48);
+			dumbyte[7]=(byte)(data>>56);
+			outstream.write(dumbyte[0]);
+			outstream.write(dumbyte[1]);
+			outstream.write(dumbyte[2]);
+			outstream.write(dumbyte[3]);
+			outstream.write(dumbyte[4]);
+			outstream.write(dumbyte[5]);
+			outstream.write(dumbyte[6]);
+			outstream.write(dumbyte[7]);
+		}catch(IOException e){
+			return false;
+		}
+		return true;
+	}
 
 	public boolean writeintelshort(OutputStream outstream,short data){
 		try{
@@ -280,6 +310,10 @@ public class jdataio{
 
 	public boolean writeintelfloat(OutputStream outstream,float data){
 		return writeintelint(outstream,Float.floatToIntBits(data));
+	}
+	
+	public boolean writeinteldouble(OutputStream outstream,double data) {
+		return writeintellong(outstream,Double.doubleToLongBits(data));
 	}
 
 	public boolean writeintelintarray(OutputStream outstream,int[] data){
@@ -569,6 +603,15 @@ public class jdataio{
 			int temp=readmotorolashort(instream);
 			if(temp==-1) return false;
 			data[i]=temp;
+		}
+		return true;
+	}
+	
+	public boolean readmotorolashortfile(InputStream instream,int length,short[] data){
+		for(int i=0;i<length;i++){
+			int temp=readmotorolashort(instream);
+			if(temp==-1) return false;
+			data[i]=(short)temp;
 		}
 		return true;
 	}
@@ -1030,7 +1073,11 @@ public class jdataio{
     }
 	
 	public static String printHexString(String contents){
-		InputStream is = new ByteArrayInputStream(contents.getBytes());
+		return printHexBytes(contents.getBytes());
+	}
+	
+	public static String printHexBytes(byte[] contents) {
+		InputStream is=new ByteArrayInputStream(contents);
 		return printHexFile(is);
 	}
 	

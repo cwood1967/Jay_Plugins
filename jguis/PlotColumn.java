@@ -8,9 +8,12 @@
 
 package jguis;
 
+import ij.IJ;
 import ij.process.ColorProcessor;
+import jalgs.algutils;
 import jalgs.jdataio;
 import jalgs.jstatistics;
+import jalgs.jfit.fit_kde_gaus;
 import jalgs.jsim.rngs;
 
 import java.awt.Color;
@@ -60,10 +63,11 @@ public class PlotColumn{
 	public static final int BOTTOM_MARGIN=50;
 	public int shapesize=8;
 	public int fontsize=14;
+	public boolean centered_data=true;
 	protected float magnification,magratio;
 	public static final String[] color_names={"black","blue","green","red","magenta","cyan","yellow","orange"};
 	public static final String[] shape_names={"line","square","+","x","triangle"};
-	public static final String[] type_names={"column","box_whisker","box_whisker_data"};
+	public static final String[] type_names={"column","box_whisker","box_whisker_data","violin","violin_data"};
 
 	public PlotColumn(String xLabel1,String yLabel1,float[] xValues1,int color1){
 		xValues=new float[][]{xValues1};
@@ -149,11 +153,25 @@ public class PlotColumn{
 		//int npts=jdio.readintelint(is);
 		nseries=jdio.readintelint(is);
 		maxpts=jdio.readintelint(is);
+		centered_data=jdio.readintelint(is)==1;
 		npts=new int[nseries];
 		xValues=new float[nseries][maxpts];
+		types=new int[nseries];
+		shapes=new int[nseries];
+		colors=new int[nseries];
 		for(int i=0;i<nseries;i++){
+			types[i]=jdio.readintelint(is);
+			shapes[i]=jdio.readintelint(is);
+			colors[i]=jdio.readintelint(is);
 			npts[i]=jdio.readintelint(is);
 			jdio.readintelfloatfile(is,npts[i],xValues[i]);
+		}
+		boolean annotated=jdio.readintelint(is)==1;
+		if(annotated){
+			annotations=new String[nseries];
+			for(int i=0;i<nseries;i++){
+				annotations[i]=jdio.readstring(is);
+			}
 		}
 		updateHistogram();
 		magnification=1.0f;
@@ -551,7 +569,18 @@ public class PlotColumn{
 		int newwidth=(int)(magnification*WIDTH);
 		int newheight=(int)(ymag*HEIGHT);
 		Rectangle frame=new Rectangle(newleftmargin,newtopmargin,newwidth,newheight);
-
+		logymin=0;
+		logyscale=0;
+		logymax=0;
+		if(logy){
+			if(yMin<=0.0f){
+				logymin=(float)Math.log(findmingt0(xValues,npts,yMax));
+			}else{
+				logymin=(float)Math.log(yMin);
+			}
+			logymax=(float)Math.log(yMax);
+			logyscale=newheight/(logymax-logymin);
+		}
 		drawAxisLabels(pr);
 		pr.setClipRect(frame.x,frame.y,frame.width,frame.height);
 		xScale=newwidth/(xMax-xMin);
@@ -559,7 +588,7 @@ public class PlotColumn{
 		//IJ.log(""+yMin+" , "+yMax);
 
 		// IJ.showMessage("testdraw2");
-		Color fillcolor=getColor(color);
+		//Color fillcolor=getColor(color);
 		float binwidth=2.0f*magnification*binSize;
 		float widthfraction=0.75f;
 		int colwidth=(int)(widthfraction*xScale);
@@ -569,26 +598,32 @@ public class PlotColumn{
 		}
 		if(colors==null){
 			colors=new int[nseries];
-			for(int i=0;i<nseries;i++) colors[i]=0; //default is black
+			for(int i=0;i<nseries;i++) colors[i]=color; //default is black
 		}
 		if(shapes==null){
 			shapes=new int[nseries];
 			for(int i=0;i<nseries;i++) shapes[i]=3; //default is x
 		}
+
 		rngs random=new rngs();
 		for(int i=0;i<nseries;i++){
 			//types[i]=2;
 			//shapes[i]=3;
-			if(types[i]==0){
+			if(types[i]==0){ //column type
     			float xval=i+0.5f;
     			int xstart=(int)(xval*xScale+frame.x-0.5f*colwidth);
     			int xend=xstart+colwidth;
     			int temp2=(int)((stats[i][0]-yMin)*yScale);
+    			if(logy) {
+    				temp2=(int)(((float)Math.log(stats[i][0])-logymin)*logyscale);
+    			}
     			if(temp2<0) temp2=0;
     			if(temp2>frame.height) temp2=frame.height;
     			int ystart=newtopmargin+frame.height-temp2;
     			int yend=newtopmargin+frame.height;
     			// first fill the rectangle
+    			Color fillcolor=getColor(colors[i]);
+    			//IJ.log(fillcolor.toString());
     			pr.setColor(fillcolor);
     			pr.fillRect(xstart,ystart,xend-xstart,yend-ystart);
     			// then outline it
@@ -597,14 +632,21 @@ public class PlotColumn{
     			//now add the error bars
     			int yl=newtopmargin+frame.height-(int)((stats[i][2]-yMin)*yScale);
     			int yu=newtopmargin+frame.height-(int)((stats[i][3]-yMin)*yScale);
+    			if(logy) {
+    				yl=newtopmargin+frame.height-(int)(((float)Math.log(stats[i][2])-logymin)*logyscale);
+    				yu=newtopmargin+frame.height-(int)(((float)Math.log(stats[i][3])-logymin)*logyscale);
+    			}
     			int xc=xstart+(int)(0.5f*colwidth);
     			pr.drawErrors(xc,yu,yl);
 			}
-			if(types[i]>0 && types[i]<3){
+			if(types[i]>0 && types[i]<3){ //box and whisker type
     			float xval=i+0.5f;
     			int xstart=(int)(xval*xScale+frame.x-colwidth/2);
     			int xend=xstart+colwidth;
     			int temp2=(int)((stats[i][0]-yMin)*yScale);
+    			if(logy) {
+    				temp2=(int)(((float)Math.log(stats[i][0])-logymin)*logyscale);
+    			}
     			if(temp2<0) temp2=0;
     			if(temp2>frame.height) temp2=frame.height;
     			int ystart=newtopmargin+frame.height-temp2;
@@ -615,6 +657,9 @@ public class PlotColumn{
     			pr.drawSquare(xc,ystart);
     			//now the median
     			int temp3=(int)((stats[i][1]-yMin)*yScale);
+    			if(logy) {
+    				temp3=(int)(((float)Math.log(stats[i][1])-logymin)*logyscale);
+    			}
     			if(temp3<0) temp3=0;
     			if(temp3>frame.height) temp3=frame.height;
     			int medstart=newtopmargin+frame.height-temp3;
@@ -622,17 +667,103 @@ public class PlotColumn{
     			//now add the box
     			int yl=newtopmargin+frame.height-(int)((stats[i][2]-yMin)*yScale);
     			int yu=newtopmargin+frame.height-(int)((stats[i][3]-yMin)*yScale);
+    			if(logy) {
+    				yl=newtopmargin+frame.height-(int)(((float)Math.log(stats[i][2])-logymin)*logyscale);
+    				yu=newtopmargin+frame.height-(int)(((float)Math.log(stats[i][3])-logymin)*logyscale);
+    			}
     			pr.drawRect(xstart,yl,xend-xstart,yu-yl);
     			//and the whiskers
     			yl=newtopmargin+frame.height-(int)((stats[i][4]-yMin)*yScale);
     			yu=newtopmargin+frame.height-(int)((stats[i][5]-yMin)*yScale);
+    			if(logy) {
+    				yl=newtopmargin+frame.height-(int)(((float)Math.log(stats[i][4])-logymin)*logyscale);
+    				yu=newtopmargin+frame.height-(int)(((float)Math.log(stats[i][5])-logymin)*logyscale);
+    			}
     			pr.drawErrors(xc,yu,yl);
-    			if(types[i]==2){
+    			if(types[i]==2){ //add the data points on top of the plot
     				int[] newxvals=new int[npts[i]];
     				int[] newyvals=new int[npts[i]];
     				for(int j=0;j<npts[i];j++){
     					newyvals[j]=newtopmargin+frame.height-(int)((xValues[i][j]-yMin)*yScale);
-    					newxvals[j]=(int)(random.unidev(xend,xstart)+0.5);
+    					if(logy) newyvals[j]=newtopmargin+frame.height-(int)(((float)Math.log(xValues[i][j])-logymin)*logyscale);
+    					if(!centered_data) {
+    						if(j%2==0) newxvals[j]=(int)(random.unidev(xend,xc)+0.5);
+    						else newxvals[j]=(int)(random.unidev(xc,xstart)+0.5);
+    					}
+    					else newxvals[j]=(int)(0.5f*(float)(xend+xstart)+0.5f);
+    				}
+    				pr.drawPolyshape(newxvals,newyvals,shapes[i],npts[i]);
+    			}
+			}
+			if(types[i]>2) { //this is a violin plot type
+				float xval=i+0.5f;
+    			int xstart=(int)(xval*xScale+frame.x-colwidth/2);
+    			int xend=xstart+colwidth;
+    			int temp2=(int)((stats[i][0]-yMin)*yScale);
+    			if(logy) {
+    				temp2=(int)(((float)Math.log(stats[i][0])-logymin)*logyscale);
+    			}
+    			if(temp2<0) temp2=0;
+    			if(temp2>frame.height) temp2=frame.height;
+    			int ystart=newtopmargin+frame.height-temp2;
+    			int yend=newtopmargin+frame.height;
+    			int xc=xstart+(int)(0.5f*colwidth);
+    			pr.setColor(getColor(colors[i]));
+    			//first draw the mean
+    			pr.drawSquare(xc,ystart);
+    			//get the kde curve
+    			float[] xvals=(float[])algutils.get_subarray(xValues[i],0,npts[i]);
+    			float[][] kde=null;
+    			if(logy) {
+    				float[] tempxvals=xvals.clone();
+    				for(int j=0;j<npts[i];j++) {
+    					if(tempxvals[j]<=0.0f) tempxvals[j]=logxmin; //would be better to eliminate it perhaps?
+    					tempxvals[j]=(float)Math.log(tempxvals[j]);
+    				}
+    				kde=fit_kde_gaus.get_kde(tempxvals);
+    			} else {
+    				kde=fit_kde_gaus.get_kde(xvals);
+    			}
+    			//new PlotWindow4("kde test","x","y",kde[0],kde[1]).draw();
+    			float kdexspace=kde[0][1]-kde[0][0];
+    			float firstx=kde[0][0]-kdexspace;
+    			float lastx=kde[0][kde[0].length-1]+kdexspace;
+    			float kdemax=jstatistics.getstatistic("Max",kde[1],null);
+    			int[][] kdexvals=new int[2][kde[0].length+2];
+    			int[] kdeyvals=new int[kde[0].length+2];
+    			if(!logy) {
+        			for(int j=0;j<kde[0].length;j++) {
+        				kdeyvals[j+1]=newtopmargin+frame.height-(int)((kde[0][j]-yMin)*yScale);
+        				kdexvals[0][j+1]=xc+(int)(0.5f*(float)colwidth*kde[1][j]/kdemax);
+        				kdexvals[1][j+1]=xc-(int)(0.5f*(float)colwidth*kde[1][j]/kdemax);
+        			}
+        			kdeyvals[0]=newtopmargin+frame.height-(int)((firstx-yMin)*yScale);
+        			kdeyvals[kdeyvals.length-1]=newtopmargin+frame.height-(int)((lastx-yMin)*yScale);
+        			kdexvals[0][0]=xc; kdexvals[0][kdeyvals.length-1]=xc; kdexvals[1][0]=xc; kdexvals[1][kdeyvals.length-1]=xc;
+    			} else {
+        			for(int j=0;j<kde[0].length;j++) {
+        				kdeyvals[j+1]=newtopmargin+frame.height-(int)((kde[0][j]-logymin)*logyscale);
+        				kdexvals[0][j+1]=xc+(int)(0.5f*(float)colwidth*kde[1][j]/kdemax);
+        				kdexvals[1][j+1]=xc-(int)(0.5f*(float)colwidth*kde[1][j]/kdemax);
+        			}
+        			kdeyvals[0]=newtopmargin+frame.height-(int)((firstx-logymin)*logyscale);
+        			kdeyvals[kdeyvals.length-1]=newtopmargin+frame.height-(int)((lastx-logymin)*logyscale);
+        			kdexvals[0][0]=xc; kdexvals[0][kdeyvals.length-1]=xc; kdexvals[1][0]=xc; kdexvals[1][kdeyvals.length-1]=xc;
+    			}
+    			pr.drawPolyLine(kdexvals[0],kdeyvals,false);
+    			pr.drawPolyLine(kdexvals[1],kdeyvals,false);
+    			//now interpolate along the kde curve to draw the plot
+    			if(types[i]==4){ //add the data points on top of the plot
+    				int[] newxvals=new int[npts[i]];
+    				int[] newyvals=new int[npts[i]];
+    				for(int j=0;j<npts[i];j++){
+    					newyvals[j]=newtopmargin+frame.height-(int)((xValues[i][j]-yMin)*yScale);
+    					if(logy) newyvals[j]=newtopmargin+frame.height-(int)(((float)Math.log(xValues[i][j])-logymin)*logyscale);
+    					if(!centered_data) {
+    						if(j%2==0) newxvals[j]=(int)(random.unidev(xend,xc)+0.5);
+    						else newxvals[j]=(int)(random.unidev(xc,xstart)+0.5);
+    					}
+    					else newxvals[j]=(int)(0.5f*(float)(xend+xstart)+0.5f);
     				}
     				pr.drawPolyshape(newxvals,newyvals,shapes[i],npts[i]);
     			}
@@ -876,11 +1007,18 @@ public class PlotColumn{
 		jdio.writeintelfloat(os,binSize);
 		jdio.writeintelint(os,nseries);
 		jdio.writeintelint(os,maxpts);
+		jdio.writeintelint(os,(centered_data?1:0));
 		for(int i=0;i<nseries;i++){
+			jdio.writeintelint(os,types[i]);
+			jdio.writeintelint(os,shapes[i]);
+			jdio.writeintelint(os,colors[i]);
     		jdio.writeintelint(os,npts[i]);
     		jdio.writeintelfloatarray(os,xValues[i],npts[i]);
 		}
-		// save the errors if they exist
+		if(annotations!=null && annotations.length==nseries){
+			jdio.writeintelint(os,1);
+			for(int i=0;i<nseries;i++) jdio.writestring(os,annotations[i]);
+		}
 	}
 
 	/*public Plot4 getSelFitCopy(){

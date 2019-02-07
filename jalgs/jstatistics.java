@@ -14,9 +14,9 @@ import java.util.Arrays;
 
 public class jstatistics{
 	public static final String[] stats={"Avg","Sum","Max","Min","Variance","Median","Mode","StDev","StErr","RelErr","Count","Percentile","ConditionalAvg","Not0Avg","Not0StDev","Not0StErr","Not0Sum",
-			"Not0Count","Not0Min","Identity","Zero","MaxPos","AvgPos"};
+			"Not0Count","Not0Min","Identity","Zero","MaxPos","AvgPos","NaN"};
 	public static final String[] stats2={"avg","sum","max","min","variance","median","mode","stdev","sterr","relerr","count","percentile","conditionalavg","not0avg","not0stdev","not0sterr","not0sum",
-			"not0count","not0min","identity","zero","maxpos","avgpos"};
+			"not0count","not0min","identity","zero","maxpos","avgpos","nan"};
 
 	public static float getstatistic(String stat,Object data,int width,int height,Rectangle r,float[] extras){
 		if(data instanceof float[]){
@@ -83,6 +83,17 @@ public class jstatistics{
 		return spectrum;
 	}
 	
+	/***************
+	 * 
+	 * @param stat
+	 * @param data
+	 * @param width
+	 * @param height
+	 * @param mask
+	 * @param lims: int array with xmin,xmax,ymin,ymax inclusive
+	 * @param extras
+	 * @return
+	 */
 	public static float getstatistic(String stat,Object data,int width,int height,boolean[] mask,int[] lims,float[] extras){
 		if(data instanceof float[]){
 			float[] tempdata=(float[])data;
@@ -160,6 +171,18 @@ public class jstatistics{
 		}else{
 			int[] tempdata=(int[])data;
 			return getstat(stat,tempdata,extras);
+		}
+	}
+	
+	public static float getstatistic(String stat,Object data,int start,int length,float[] extras){
+		if(data instanceof float[]){
+			return getstat(stat,(float[])algutils.get_subarray(data,start,length),extras);
+		}else if(data instanceof short[]){
+			return getstat(stat,(short[])algutils.get_subarray(data,start,length),extras);
+		}else if(data instanceof byte[]){
+			return getstat(stat,(byte[])algutils.get_subarray(data,start,length),extras);
+		}else{
+			return getstat(stat,(int[])algutils.get_subarray(data,start,length),extras);
 		}
 	}
 	
@@ -243,6 +266,9 @@ public class jstatistics{
 		if(stat.equalsIgnoreCase("avgpos")){
 			return favgpos(tempdata);
 		}
+		if(stat.equalsIgnoreCase("nan")){
+			return Float.NaN;
+		}
 		return 0.0f;
 	}
 
@@ -317,6 +343,9 @@ public class jstatistics{
 		}
 		if(stat.equalsIgnoreCase("avgpos")){
 			return savgpos(tempdata);
+		}
+		if(stat.equalsIgnoreCase("nan")){
+			return Float.NaN;
 		}
 		return 0.0f;
 	}
@@ -393,6 +422,9 @@ public class jstatistics{
 		if(stat.equalsIgnoreCase("avgpos")){
 			return iavgpos(tempdata);
 		}
+		if(stat.equalsIgnoreCase("nan")){
+			return Float.NaN;
+		}
 		return 0.0f;
 	}
 
@@ -468,18 +500,24 @@ public class jstatistics{
 		if(stat.equalsIgnoreCase("avgpos")){
 			return bavgpos(tempdata);
 		}
+		if(stat.equalsIgnoreCase("nan")){
+			return Float.NaN;
+		}
 		return 0.0f;
 	}
 
 	public static float favg(float[] data){
 		double tempavg=0.0;
+		int len=0;
 		for(int i=0;i<data.length;i++){
 			if(!Float.isInfinite(data[i])){
 				if(!Float.isNaN(data[i])){
-					tempavg+=(double)data[i]/(double)(data.length);
+					tempavg+=(double)data[i];
+					len++;
 				}
 			}
 		}
+		tempavg/=(double)len;
 		return (float)tempavg;
 	}
 
@@ -1730,6 +1768,15 @@ public class jstatistics{
 		return retarray;
 	}
 	
+	/************************
+	 * 
+	 * @param data
+	 * @param width
+	 * @param height
+	 * @param mask
+	 * @param lims: int array with xmin,xmax,ymin,ymax inclusive
+	 * @return
+	 */
 	public static short[] getmask(short[] data,int width,int height,boolean[] mask,int[] lims){
 		int npts=getmaskarea(mask,width,height,lims);
 		if(npts==0)

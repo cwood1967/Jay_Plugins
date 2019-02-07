@@ -20,6 +20,7 @@ import ij.gui.PlotWindow;
 import ij.gui.Roi;
 import ij.measure.Calibration;
 import ij.plugin.filter.BackgroundSubtracter;
+import ij.plugin.filter.GaussianBlur;
 import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
 import ij.process.FloatProcessor;
@@ -29,6 +30,7 @@ import ij.process.ShortProcessor;
 import ij.text.TextWindow;
 import jalgs.algutils;
 import jalgs.interpolation;
+import jalgs.jdataio;
 import jalgs.jstatistics;
 import jalgs.jseg.findblobs3;
 import jalgs.jseg.measure_object;
@@ -42,16 +44,21 @@ import java.awt.Rectangle;
 import java.awt.image.IndexColorModel;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.URL;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.List;
 import java.util.Vector;
 
 public class jutils{
@@ -82,22 +89,27 @@ public class jutils{
 	}
 	
 	public static boolean isPlotHist(ImageWindow iw){
+		if(iw==null) return false;
 		return (iw.getClass().getName().equals("jguis.PlotWindowHist") || iw.getClass().getName().equals("jguis.PlotWindow2DHist"));
 	}
 	
 	public static boolean is3DPlot(ImageWindow iw){
+		if(iw==null) return false;
 		return (iw.getClass().getName().equals("jguis.PlotWindow3D"));
 	}
 
 	public static boolean isPlot(ImageWindow iw){
+		if(iw==null) return false;
 		return(isPW4(iw)||isPW(iw));
 	}
 
 	public static boolean isPW4(ImageWindow iw){
+		if(iw==null) return false;
 		return iw.getClass().getName().equals("jguis.PlotWindow4");
 	}
 
 	public static boolean isPW(ImageWindow iw){
+		if(iw==null) return false;
 		return iw.getClass().getName().equals("ij.gui.PlotWindow");
 	}
 	
@@ -114,12 +126,16 @@ public class jutils{
 			/*Field maincurvefield=temp.getDeclaredField("getMainCurveObject");
 			maincurvefield.setAccessible(true);
 			Object po=maincurvefield.get(plot);*/
-			Field xlabelfield=temp.getDeclaredField("xLabel");
+			/*Field xlabelfield=temp.getDeclaredField("xLabel");
 			xlabelfield.setAccessible(true);
 			String xlabel=(String)xlabelfield.get(plot);
 			Field ylabelfield=temp.getDeclaredField("yLabel");
 			ylabelfield.setAccessible(true);
-			String ylabel=(String)ylabelfield.get(plot);
+			String ylabel=(String)ylabelfield.get(plot);*/
+			String xlabel=plot.getLabel('x');
+			String ylabel=plot.getLabel('y');
+			if(xlabel.equals("")) xlabel="x";
+			if(ylabel.equals("")) xlabel="y";
 			double[] limits=plot.getLimits();
 			double xmin=limits[0]; double xmax=limits[1]; double ymin=limits[2]; double ymax=limits[3];
 			/*Field xminfield=temp.getDeclaredField("xMin");
@@ -153,12 +169,12 @@ public class jutils{
 			}*/
 			p4.setLimits(new float[]{(float)xmin,(float)xmax,(float)ymin,(float)ymax});
 			return p4;
-		}catch(NoSuchFieldException e){
-			IJ.log("no such field exception");
+		//}catch(NoSuchFieldException e){
+		//	IJ.log("no such field exception");
 		}catch(IllegalArgumentException e){
 			IJ.log("illegal argument exception");
-		}catch(IllegalAccessException e){
-			IJ.log("illegal access exception");
+		//}catch(IllegalAccessException e){
+		//	IJ.log("illegal access exception");
 		}
 		return null;
 	}
@@ -257,7 +273,11 @@ public class jutils{
 				pw2.draw();
 				return pw2;
 			}else{
-				return null;
+				if(iw.getClass().getName().equals("jguis.PlotWindowHist")){
+					return getPW4SelCopy(iw,0);
+				} else {
+					return null;
+				}
 			}
 		}
 	}
@@ -314,12 +334,8 @@ public class jutils{
 	public static PlotWindow4 getPW4SelCopy(ImageWindow iw,int selected){
 		if(iw.getClass().getName().equals("jguis.PlotWindow4")){
 			float[][] yvals=(float[][])runPW4VoidMethod(iw,"getYValues");
-			if(selected<=0){
-				selected=0;
-			}
-			if(selected>=yvals.length){
-				selected=0;
-			}
+			if(selected<=0) selected=0;
+			if(selected>=yvals.length) selected=0;
 			int[] npts=(int[])runPW4VoidMethod(iw,"getNpts");
 			float[] newyvals=new float[npts[selected]];
 			System.arraycopy(yvals[selected],0,newyvals,0,npts[selected]);
@@ -377,6 +393,97 @@ public class jutils{
 			return pw;
 		}else{
 			return null;
+		}
+	}
+	
+	public static PlotWindow3D getPW3DSelCopy(ImageWindow iw,int selected) {
+		float[][] yvals=(float[][])runPW4VoidMethod(iw,"getYValues");
+		if(selected<=0) selected=0;
+		if(selected>=yvals.length) selected=0;
+		int[][] npts=(int[][])runPW4VoidMethod(iw,"getNpts");
+		float[][][] zvals=(float[][][])runPW4VoidMethod(iw,"getZValues");
+		float[][] xvals=(float[][])runPW4VoidMethod(iw,"getXValues");
+		Object plot=runPW4VoidMethod(iw,"getPlot");
+		String[] labels=(String[])runPW4VoidMethod(iw,"getAllLabels");
+		String[] newlabels=new String[labels.length];
+		copystringarray(labels,newlabels);
+		float[] limits=(float[])runPW4VoidMethod(iw,"getLimits");
+		int[] shapes=(int[])runPW4VoidMethod(iw,"getShapes");
+		int[] colors=(int[])runPW4VoidMethod(iw,"getColors");
+		boolean[] logaxes=(boolean[])runPW4VoidMethod(iw,"getLogAxes");
+		PlotWindow3D pw=null;
+		if(plot.getClass().getName().equals("jguis.Traj3D")) {
+			float[] newyvals=new float[npts[0][selected]];
+			System.arraycopy(yvals[selected],0,newyvals,0,npts[0][selected]);
+			float[] newxvals=new float[npts[0][selected]];
+			System.arraycopy(xvals[selected],0,newxvals,0,npts[0][selected]);
+			float[] newzvals=new float[npts[0][selected]];
+			System.arraycopy(zvals[0][selected],0,newzvals,0,npts[0][selected]);
+			Traj3D plot2=new Traj3D(labels[1],labels[2],labels[3],newxvals,newyvals,newzvals);
+			pw=new PlotWindow3D(labels[0]+"-series"+(selected+1),plot2);
+		} else {
+			float[] newyvals=new float[npts[1][selected]];
+			System.arraycopy(yvals[selected],0,newyvals,0,npts[1][selected]);
+			float[] newxvals=new float[npts[selected][0]];
+			System.arraycopy(xvals[selected],0,newxvals,0,npts[0][selected]);
+			float[][] newzvals=new float[npts[0][selected]][npts[1][selected]];
+			for(int j=0;j<npts[0][selected];j++) {
+				System.arraycopy(zvals[selected][j],0,newzvals[j],0,npts[1][selected]);
+			}
+			Plot3D plot2=new Plot3D(labels[1],labels[2],labels[3],newxvals,newyvals,newzvals);
+			pw=new PlotWindow3D(labels[0]+"-series"+(selected+1),plot2);
+		}
+		pw.draw();
+		pw.setLogAxes(logaxes[0],logaxes[1],logaxes[2]);
+		int[] newshapes=pw.getShapes();
+		newshapes[0]=shapes[selected];
+		int[] newcolors=pw.getColors();
+		newcolors[0]=colors[selected];
+		pw.setLimits(limits);
+		return pw;
+	}
+	
+	public static Plot3D getPW3DPlotCopy(ImageWindow iw) {
+		float[][] yvals=(float[][])runPW4VoidMethod(iw,"getYValues");
+		int[][] npts=(int[][])runPW4VoidMethod(iw,"getNpts");
+		float[][][] zvals=(float[][][])runPW4VoidMethod(iw,"getZValues");
+		float[][] xvals=(float[][])runPW4VoidMethod(iw,"getXValues");
+		Object plot=runPW4VoidMethod(iw,"getPlot");
+		String[] labels=(String[])runPW4VoidMethod(iw,"getAllLabels");
+		String[] newlabels=new String[labels.length];
+		copystringarray(labels,newlabels);
+		float[] limits=(float[])runPW4VoidMethod(iw,"getLimits");
+		int[] shapes=(int[])runPW4VoidMethod(iw,"getShapes");
+		int[] colors=(int[])runPW4VoidMethod(iw,"getColors");
+		boolean[] logaxes=(boolean[])runPW4VoidMethod(iw,"getLogAxes");
+		if(plot.getClass().getName().equals("jguis.Traj3D")) {
+			float[][] newyvals=algutils.clone_multidim_array(yvals);
+			float[][] newxvals=algutils.clone_multidim_array(xvals);
+			float[][] newzvals=algutils.clone_multidim_array(zvals[0]);
+			int[] newnpts=npts[0].clone();
+			Traj3D plot2=new Traj3D(labels[1],labels[2],labels[3],newxvals,newyvals,newzvals,newnpts);
+			plot2.setLogAxes(logaxes[0],logaxes[1],logaxes[2]);
+			int[] newshapes=plot2.getShapes();
+			for(int i=0;i<newshapes.length;i++) newshapes[i]=shapes[i];
+			int[] newcolors=plot2.getColors();
+			for(int i=0;i<newcolors.length;i++) newcolors[i]=colors[i];
+			plot2.setLimits(limits);
+			return plot2;
+		} else {
+			float[][] newyvals=algutils.clone_multidim_array(yvals);
+			float[][] newxvals=algutils.clone_multidim_array(xvals);
+			float[][][] newzvals=new float[zvals.length][][];
+			int[][] newnpts=algutils.clone_multidim_array(npts);
+			for(int j=0;j<zvals.length;j++) {
+				newzvals[j]=algutils.clone_multidim_array(zvals[j]);
+			}
+			Plot3D plot2=new Plot3D(labels[1],labels[2],labels[3],newxvals,newyvals,newzvals,newnpts);
+			plot2.setLogAxes(logaxes[0],logaxes[1],logaxes[2]);
+			int[] newshapes=plot2.getShapes();
+			for(int i=0;i<newshapes.length;i++) newshapes[i]=shapes[i];
+			int[] newcolors=plot2.getColors();
+			for(int i=0;i<newcolors.length;i++) newcolors[i]=colors[i];
+			return plot2;
 		}
 	}
 
@@ -503,6 +610,26 @@ public class jutils{
 			IJ.log("illegal access exception");
 		}
 		return null;
+	}
+	
+	public static void setReflectionField(Object obj,String fieldname,Object value) {
+		try{
+			Class<?> temp=obj.getClass();
+			Field field=temp.getDeclaredField(fieldname);
+			field.setAccessible(true);
+			if(value instanceof Boolean) field.setBoolean(obj,((Boolean)value).booleanValue());
+			if(value instanceof Byte) field.setByte(obj,((Byte)value).byteValue());
+			if(value instanceof Short) field.setShort(obj,((Short)value).shortValue());
+			if(value instanceof Float) field.setFloat(obj,((Float)value).floatValue());
+			if(value instanceof Double) field.setDouble(obj,((Double)value).doubleValue());
+			if(value instanceof Integer) field.setInt(obj,((Integer)value).intValue());
+		}catch(NoSuchFieldException e){
+			IJ.log("no such field exception");
+		}catch(IllegalArgumentException e){
+			IJ.log("illegal argument exception");
+		}catch(IllegalAccessException e){
+			IJ.log("illegal access exception");
+		}
 	}
 
 	public static void copyfloat2dimvector(float[][] data,float[][] dest){
@@ -2107,6 +2234,14 @@ public class jutils{
 		imp.updateAndDraw();
 	}
 	
+	/*************
+	 * this is a simple implementation of the ImageJ rolling ball background subtraction
+	 * @param image
+	 * @param ballrad
+	 * @param width
+	 * @param height
+	 * @return
+	 */
 	public static float[] sub_roll_ball_back(float[] image,float ballrad,int width,int height){
 		FloatProcessor fp2=new FloatProcessor(width,height,image.clone(),null);
 		fp2.snapshot();
@@ -2115,12 +2250,55 @@ public class jutils{
 		return (float[])fp2.getPixels();
 	}
 	
+	/************
+	 * does rolling ball for stacks
+	 * @param stack
+	 * @param ballrad
+	 * @param width
+	 * @param height
+	 * @return
+	 */
 	public static float[][] sub_roll_ball_back(Object[] stack,float ballrad,int width,int height){
 		float[][] retstack=new float[stack.length][];
 		for(int i=0;i<stack.length;i++){
 			retstack[i]=sub_roll_ball_back(algutils.convert_arr_float(stack[i]),ballrad,width,height);
 		}
 		return retstack;
+	}
+	
+	public static float[] gaussian_blur(float[] image,float blurstdev,int width,int height) {
+		FloatProcessor fp=new FloatProcessor(width,height,image.clone(),null);
+		(new GaussianBlur()).blurFloat(fp,blurstdev,blurstdev,0.0002);
+		return (float[])fp.getPixels();
+	}
+	
+	public static void load_plugins_list(){
+		ClassLoader cl=IJ.getClassLoader();
+		/*IJ.log(cl.toString());
+		try{
+			Enumeration<URL> resource=cl.getResources("Plugins_List.xls");
+			IJ.log(resource.nextElement().toString());
+		}catch(IOException e){
+			return;
+		}*/
+		InputStream is=cl.getResourceAsStream("Plugins_List.xls");
+		jdataio jdio=new jdataio();
+		ByteArrayOutputStream buffer=new ByteArrayOutputStream();
+		int len=0;
+		byte[] data=new byte[16384];
+		try{
+			while((len=is.read(data,0,data.length))!=-1){
+				buffer.write(data,0,len);
+			}
+			buffer.flush();
+		}catch(IOException e){
+			IJ.log(jdio.getExceptionTrace(e));
+			return;
+		}
+		List<List<String>> listtable=table_tools.table2listtable(buffer.toString(),"\t");
+		String[] col_labels=table_tools.list2stringarray(listtable.get(0));
+		listtable.remove(0);
+		table_tools.create_table("Jay_Plugins_List",listtable,col_labels);
 	}
 
 	public static void run_command_in_IJ_thread(String command,String args){

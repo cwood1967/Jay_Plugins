@@ -8,17 +8,22 @@
 
 package jguis;
 
+import ij.CompositeImage;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.gui.GenericDialog;
 import ij.gui.ImageRoi;
+import ij.gui.ImageWindow;
 import ij.gui.Overlay;
 import ij.gui.Roi;
 import ij.measure.Calibration;
 import ij.process.ColorProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ShortProcessor;
+import jalgs.algutils;
+import jalgs.jstatistics;
+import jalgs.jfit.linleastsquares;
 
 import java.awt.Button;
 import java.awt.Checkbox;
@@ -64,7 +69,7 @@ public class Hist2DWindow extends Panel implements ActionListener,AdjustmentList
 	private Label dispminlabel,dispmaxlabel,scalehistlabel,scorelabel,xlabel,ylabel,slicelabel,xavglabel,yavglabel,threshlabel;
 	private Label xstdevlabel,ystdevlabel,zstdevlabel,zavglabel;
 	private Label roiwidthlabel,roiheightlabel,roixlabel,roiylabel,slabel,s0label,offlabel,backlabel;
-	private Button smooth_button,revert_button,savehist_button,saveimg_button,saveyimg_button;
+	private Button smooth_button,revert_button,savehist_button,saveimg_button,saveyimg_button,unmix_button,unmix_button2;
 	CheckboxGroup roishapegroup;
 	Checkbox roisquare,roioval;
 	CheckboxGroup plottypegroup;
@@ -125,9 +130,16 @@ public class Hist2DWindow extends Panel implements ActionListener,AdjustmentList
 
 	public void init(ImagePlus ximp,ImagePlus yimp,ImagePlus zimp,ImagePlus dataimp,ImagePlus dispimp,int calltype){
 		//calltype is 1: N&B, 2: acceptor photobleaching fret, and 3: ratiometric fret
-		//want to add a spectral phasor option
+		//want to add a spectral phasor option (4)
 		//need a placeholder for profile data
 		init_options();
+		if(calltype==4) {
+			ascale=0;
+			xmin=-1.0f;
+			xmax=1.0f;
+			ymin=-1.0f;
+			ymax=1.0f;
+		}
 		setLayout(null);
 		// initialize all of the variables
 		width=ximp.getWidth();
@@ -167,6 +179,7 @@ public class Hist2DWindow extends Panel implements ActionListener,AdjustmentList
 		currslice=0;
 		addMouseMotionListener(this);
 		addMouseListener(this);
+
 		xminval=new TextField(""+xmin,10);
 		xminval.setBounds(90,10+imageheight+50+256+20,80,20);
 		xminval.addActionListener(this);
@@ -196,6 +209,12 @@ public class Hist2DWindow extends Panel implements ActionListener,AdjustmentList
 		saveyimg_button=new Button(saveyimglabel);
 		saveyimg_button.setBounds(100+256+10+110+10+100,10+imageheight+50+260,80,20);
 		saveyimg_button.addActionListener(this);
+		unmix_button=new Button("Unmix Histogram");
+		unmix_button.setBounds(100+256+10+110,10+imageheight+50+260,100,20);
+		unmix_button.addActionListener(this);
+		unmix_button2=new Button("Unmix Histogram2");
+		unmix_button2.setBounds(100+256+10+110,10+imageheight+50+290,100,20);
+		unmix_button2.addActionListener(this);
 
 		roiwidthlabel=new Label("Roi Width");
 		roiwidthlabel.setBounds(100+256+10,10+imageheight+50,100,20);
@@ -403,6 +422,8 @@ public class Hist2DWindow extends Panel implements ActionListener,AdjustmentList
 		add(xlabel);
 		add(ylabel);
 		add(saveyimg_button);
+		add(unmix_button);
+		add(unmix_button2);
 		add(ascalecheck);
 		add(slicelabel);
 		add(sliceval);
@@ -524,6 +545,12 @@ public class Hist2DWindow extends Panel implements ActionListener,AdjustmentList
 		if(e.getSource()==saveyimg_button){
 			if(datastack!=null) save_profile();
 			else save_histypix();
+		}
+		if(e.getSource()==unmix_button){
+			if(datastack!=null) save_unmixed();
+		}
+		if(e.getSource()==unmix_button2){
+			if(datastack!=null) unmix_geom();
 		}
 		xmin=Float.parseFloat(xminval.getText());
 		xmax=Float.parseFloat(xmaxval.getText());
@@ -1359,9 +1386,10 @@ public class Hist2DWindow extends Panel implements ActionListener,AdjustmentList
 	
 	void save_profile(){
 		if(datastack!=null){
+			int dtype=algutils.get_array_type(datastack.getPixels(1));
 			int stacklength=datastack.getSize()/slices;
 			float[] decay=new float[stacklength];
-			if(datastack.getProcessor(1) instanceof FloatProcessor){
+			if(dtype==2){
 				for(int i=0;i<width*height;i++){
 					if(mask[i]==1){
 						for(int j=0;j<stacklength;j++){
@@ -1369,7 +1397,7 @@ public class Hist2DWindow extends Panel implements ActionListener,AdjustmentList
 						}
 					}
 				}
-			} else if(datastack.getProcessor(1) instanceof ShortProcessor) {
+			} else if(dtype==1) {
 				for(int i=0;i<width*height;i++){
 					if(mask[i]==1){
 						for(int j=0;j<stacklength;j++){
@@ -1391,7 +1419,45 @@ public class Hist2DWindow extends Panel implements ActionListener,AdjustmentList
 			(new PlotWindow4("Masked Profile","channel","Intensity",decay)).draw();
 		}
 	}
-
+	
+	void save_unmixed(){
+		//start by getting the spectra
+		ImageWindow[] iw=jutils.selectPlots(false,1,new String[]{"Reference Spectra"});
+		if(iw==null) return;
+		float[][] spectra=(float[][])jutils.runPW4VoidMethod(iw[0],"getYValues");
+		float[][] unmixed=PU.unmix_phasor(spectra,this);
+		ImagePlus unimp=new ImagePlus("Unmixed",jutils.array2stack(unmixed,width,height));
+		unimp.setOpenAsHyperStack(true);
+		unimp.setDimensions(unmixed.length/slices,slices,1);
+		new CompositeImage(unimp,CompositeImage.COLOR).show();
+	}
+	
+	void unmix_geom(){
+		GenericDialog gd2=new GenericDialog("Number_of_components");
+		gd2.addNumericField("How_Many_Components?",3,0);
+		gd2.showDialog(); if(gd2.wasCanceled()) return;
+		int ncomp=(int)gd2.getNextNumber();
+		GenericDialog gd=new GenericDialog("Options");
+		for(int i=0;i<ncomp;i++){
+			gd.addNumericField("G"+(i+1),0.0,5,15,null);
+			gd.addNumericField("S"+(i+1),0.0,5,15,null);
+		}
+		gd.showDialog(); if(gd.wasCanceled()) return;
+		float[][] positions=new float[ncomp][2];
+		for(int i=0;i<ncomp;i++){
+			positions[i][0]=(float)gd.getNextNumber();
+			positions[i][1]=(float)gd.getNextNumber();
+		}
+		Object[] temp=PU.unmix_phasor_geom3(positions,this);
+		float[][] unmixed=(float[][])temp[0];
+		float[][] fractions=(float[][])temp[1];
+		ImagePlus unimp=new ImagePlus("Unmixed",jutils.array2stack(unmixed,width,height));
+		unimp.setOpenAsHyperStack(true);
+		unimp.setDimensions(unmixed.length/slices,slices,1);
+		new CompositeImage(unimp,CompositeImage.COLOR).show();
+		new ImagePlus("Fractions",jutils.array2stack(fractions,256,256)).show();
+	}
+	
 	void init_options(){
 		String dir=System.getProperty("user.home");
 		try{

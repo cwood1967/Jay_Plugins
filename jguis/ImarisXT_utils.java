@@ -144,8 +144,9 @@ public class ImarisXT_utils{
 			}
 			ISpotsPrx spots=app.GetFactory().CreateSpots();
 			spots.Set(coords2,timeindices,radii);
+			spots.SetName("ImageJ_Spots");
 			IDataContainerPrx surpass=app.GetSurpassScene();
-			surpass.AddChild(surpass,-1);
+			surpass.AddChild(spots,-1);
 			return true;
 		}catch(Error e){
 			IJ.log((new jdataio()).getExceptionTrace(e));

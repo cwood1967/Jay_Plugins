@@ -216,6 +216,51 @@ public class measure_object{
 		float[] measurements={firstpos,midpos,lastpos,midcoords[0],midcoords[1],id};
 		return new Object[]{newobject,measurements};
 	}
+	
+	/**************
+	 * this calculates the tranformation matrix for rotation by angle theta about the axis given by axisvec--must be unit length
+	 * @param axisvec: unit length axis of rotation vector
+	 * @param theta: angle to rotate
+	 * @return
+	 */
+	public static float[][] getRotationMatrix(float[] axisvec,float theta){
+		float[] u=axisvec.clone();
+		float cost=(float)Math.cos(theta);
+		float sint=(float)Math.sin(theta);
+		float[][] r=new float[3][];
+		r[0]=new float[]{cost+u[0]*u[0]*(1.0f-cost), u[0]*u[1]*(1.0f-cost)-u[2]*sint, u[0]*u[2]*(1.0f-cost)+u[1]*sint};
+		r[1]=new float[]{u[0]*u[1]*(1.0f-cost)+u[2]*sint, cost+u[1]*u[1]*(1.0f-cost), u[1]*u[2]*(1.0f-cost)-u[0]*sint};
+		r[2]=new float[]{u[0]*u[2]*(1.0f-cost)-u[1]*sint, u[1]*u[2]*(1.0f-cost)+u[2]*sint, u[2]*u[2]*(1.0f-cost)+cost};
+		return r;
+	}
+	
+	/**********************
+	 * calculates the cross product of two vectors
+	 * @param u: vector 1
+	 * @param v: vector 2
+	 * @return
+	 */
+	public static float[] crossProd(float[] u,float[] v){
+		float[] cp=new float[3];
+		cp[0]=(u[1]*v[2]-u[2]*v[1]);
+		cp[1]=(u[2]*v[0]-u[0]*v[2]);
+		cp[2]=(u[0]*v[1]-u[1]*v[0]);
+		return cp;
+	}
+	
+	/**********************
+	 * calculates the cross product of two vectors
+	 * @param u: vector 1
+	 * @param v: vector 2
+	 * @return
+	 */
+	public static double[] crossProd(double[] u,double[] v){
+		double[] cp=new double[3];
+		cp[0]=(u[1]*v[2]-u[2]*v[1]);
+		cp[1]=(u[2]*v[0]-u[0]*v[2]);
+		cp[2]=(u[0]*v[1]-u[1]*v[0]);
+		return cp;
+	}
 
 	public static float objwidth(float[] image,float id,int width,int height){
 		int minpos=width-1;
@@ -716,7 +761,8 @@ public class measure_object{
 	public static float get_inner_angle(float[] vec1,float[] vec2){
 		float[] tempvec1=norm_vector(vec1);
 		float[] tempvec2=norm_vector(vec2);
-		float dotprod=tempvec1[0]*tempvec2[0]+tempvec1[1]*tempvec2[1];
+		float dotprod=0.0f;
+		for(int i=0;i<vec1.length;i++) dotprod+=tempvec1[i]*tempvec2[i];
 		return (float)Math.acos(dotprod);
 	}
 
@@ -733,8 +779,11 @@ public class measure_object{
 	}
 
 	public static float[] norm_vector(float[] vec){
-		float length=(float)Math.sqrt(vec[0]*vec[0]+vec[1]*vec[1]);
-		float[] retvec={vec[0]/length,vec[1]/length};
+		float length2=0.0f;
+		for(int i=0;i<vec.length;i++) length2+=vec[i]*vec[i];
+		float length=(float)Math.sqrt(length2);
+		float[] retvec=new float[vec.length];
+		for(int i=0;i<vec.length;i++) retvec[i]=vec[i]/length;
 		return retvec;
 	}
 

@@ -14,6 +14,7 @@ import ij.ImagePlus;
 import ij.ImageStack;
 import ij.LookUpTable;
 import ij.io.FileInfo;
+import ij.io.FileSaver;
 import ij.io.ImageReader;
 import ij.io.RandomAccessStream;
 import ij.measure.Calibration;
@@ -51,6 +52,20 @@ public class LSM_file_reader{
 	public static char micro='\u00b5';
 
 	public static String micrometer=micro+"m";
+	
+	public static void main(String[] args){
+		//the first argument should be the incoming file name, the second the outgoing
+		File f=new File(args[0]);
+		LSM_file_reader lfr=new LSM_file_reader();
+		ImagePlus imp=lfr.open(f);
+		if(imp.getNFrames()>1){
+			
+		}
+		FileSaver fs=new FileSaver(imp);
+		fs.saveAsTiffStack(args[1]);
+		imp.close();
+		System.out.println(args[0]+"=>"+args[1]+" complete");
+	}
 
 	public ImagePlus open(String directory,String filename){
 		return open(new File(directory,filename));

@@ -2,10 +2,12 @@ package jguis;
 
 import ij.IJ;
 import ij.gui.PointRoi;
+import ij.gui.PolygonRoi;
 import ij.gui.Roi;
 import ij.io.RoiDecoder;
 import ij.io.RoiEncoder;
 
+import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
@@ -28,6 +30,7 @@ public class multi_roi_writer{
 			for(int i=0;i<rois.length;i++){
 				if(rois[i]!=null){
 					String label=rois[i].getName();
+					if(label==null) label=getLabel(rois[i]);
 					if(!label.endsWith(".roi")) label+=".roi";
 					zos.putNextEntry(new ZipEntry(label));
 					re.write(rois[i]);
@@ -40,6 +43,38 @@ public class multi_roi_writer{
 			IJ.log(e.toString());
 			return false;
 		}
+	}
+	
+	public static String getLabel(Roi roi) {
+		Rectangle r=roi.getBounds();
+		int xc=r.x+r.width/2;
+		int yc=r.y+r.height/2;
+		if(xc<0) xc=0;
+		if(yc<0) yc=0;
+		String label=padIntString(yc,4)+"-"+padIntString(xc,4);
+		if(xc>=10000) label=padIntString(yc,5)+"-"+padIntString(xc,5);
+		return label;
+	}
+	
+	public static String padIntString(int val,int ndigits) {
+		int val2=val;
+		if(val2<0) val2=0;
+		String sval=""+val2;
+		int slength=sval.length();
+		if(slength>=ndigits) {
+			return sval.substring(0,ndigits);
+		} else {
+			for(int i=slength;i<ndigits;i++) {
+				sval="0"+sval;
+			}
+			return sval;
+		}
+	}
+	
+	public static boolean writeRois(Polygon[] polys,String path) {
+		Roi[] rois=new Roi[polys.length];
+		for(int i=0;i<polys.length;i++) rois[i]=new PolygonRoi(polys[i],Roi.FREEROI);
+		return writeRois(rois,path);
 	}
 	
 	public static boolean writeRoi(Roi roi,String path){

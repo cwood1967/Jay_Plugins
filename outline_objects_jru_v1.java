@@ -23,7 +23,7 @@ public class outline_objects_jru_v1 implements PlugIn, DialogListener{
 	public findblobs3 fb;
 	public int width,height,minarea,maxarea;
 	public float dispmin,dispmax,thresh,minint,maxint;
-	public boolean showmask,editobj,segstack;
+	public boolean showmask,editobj,segstack,measure_immediate;
 	public float[][] offmult;
 	public float[][] chstats;
 	public boolean combine;
@@ -78,13 +78,15 @@ public class outline_objects_jru_v1 implements PlugIn, DialogListener{
 		display.show();
 		showmask=false;
 		update_image(thresh,10,10000);
-		GenericDialog gd=new NonBlockingGenericDialog("Threshholding Options");
+		//GenericDialog gd=new NonBlockingGenericDialog("Threshholding Options");
+		GenericDialog gd=new GenericDialog("Threshholding Options");
 		gd.addNumericField("Threshold",thresh,5,15,null);
 		gd.addNumericField("Min_Area",10,0);
 		gd.addNumericField("Max_Area",10000,0);
 		gd.addCheckbox("Show_Mask",showmask);
 		gd.addCheckbox("Edit_Objects",true);
 		gd.addCheckbox("Segment_Stack",false);
+		gd.addCheckbox("Measure_Objects_Immediately",false);
 		//gd.addNumericField("#_of_objects",fb.nobjects,0);
 		//Vector numberfields=gd.getNumericFields();
 		//nobjects=(TextField)numberfields.elementAt(3);
@@ -94,12 +96,13 @@ public class outline_objects_jru_v1 implements PlugIn, DialogListener{
 			display.close();
 			return;
 		}
-		/*thresh=(float)gd.getNextNumber();
-		int minarea=(int)gd.getNextNumber();
-		int maxarea=(int)gd.getNextNumber();
+		thresh=(float)gd.getNextNumber();
+		minarea=(int)gd.getNextNumber();
+		maxarea=(int)gd.getNextNumber();
 		showmask=gd.getNextBoolean();
-		boolean editobj=gd.getNextBoolean();
-		boolean segstack=gd.getNextBoolean();*/
+		editobj=gd.getNextBoolean();
+		segstack=gd.getNextBoolean();
+		measure_immediate=gd.getNextBoolean();
 		update_image(thresh,minarea,maxarea);
 		if(segstack){
 			ImageStack threshstack=new ImageStack(width,height);
@@ -115,6 +118,21 @@ public class outline_objects_jru_v1 implements PlugIn, DialogListener{
 				}
 			}
 			jutils.create_hyperstack("Stack Threshold",threshstack,frames,slices,1,false,null).show();
+		}
+		if(measure_immediate){
+			float thresh2=thresh*(maxint-minint)+minint;
+			float[] objects=fb.dofindblobs(pixels,thresh2);
+			int[] arealims={minarea,maxarea};
+			fb.clear_edges(objects);
+			fb.filter_area(objects,arealims,true);
+			ImagePlus[] measimp=jutils.selectImages(false,1,new String[]{"Measurement_Image"});
+			if(measimp!=null){
+				ImageStack stack=measimp[0].getStack();
+				Object[] stack2=jutils.stack2array(stack);
+				float[][] stats=fb.get_all_object_stats(objects,stack2,"Avg");
+				String newlabels=table_tools.createcollabels(stack2.length,"Avg");
+				table_tools.create_table("Object_Measurements",stats,table_tools.split_string_tab(newlabels));
+			}
 		}
 		if(editobj){
 			threshold_panel tp=new threshold_panel();
@@ -202,6 +220,7 @@ public class outline_objects_jru_v1 implements PlugIn, DialogListener{
 		showmask=gd.getNextBoolean();
 		editobj=gd.getNextBoolean();
 		segstack=gd.getNextBoolean();
+		measure_immediate=gd.getNextBoolean();
 		update_image(thresh,minarea,maxarea);
 		//nobjects.setText(""+fb.nobjects);
 		return true;

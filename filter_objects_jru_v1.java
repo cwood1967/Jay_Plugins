@@ -25,11 +25,19 @@ public class filter_objects_jru_v1 implements PlugIn {
 		gd.addNumericField("Max Size (pixels)",maxarea,0);
 		boolean newimage=true;
 		gd.addCheckbox("Create_New_Image?",newimage);
+		gd.addCheckbox("Output_Indexed?",false);
+		gd.addCheckbox("Create_Border (circ)",false);
+		gd.addNumericField("Border_Thickness (pixels)",3,0);
+		gd.addNumericField("Border_Gap (pixels)",0,0);
 		gd.showDialog(); if(gd.wasCanceled()){return;}
 		clearedges=gd.getNextBoolean();
 		minarea=(int)gd.getNextNumber();
 		maxarea=(int)gd.getNextNumber();
 		newimage=gd.getNextBoolean();
+		boolean outindexed=gd.getNextBoolean();
+		boolean border=gd.getNextBoolean();
+		int bordrad=(int)gd.getNextNumber();
+		int bordgap=(int)gd.getNextNumber();
 		ImagePlus imp=WindowManager.getCurrentImage();
 		int width=imp.getWidth(); int height=imp.getHeight();
 		findblobs3 fb=new findblobs3(width,height);
@@ -42,14 +50,16 @@ public class filter_objects_jru_v1 implements PlugIn {
 			if(clearedges) fb.clear_edges(objects);
 			int[] filter={minarea,maxarea};
 			fb.filter_area(objects,filter);
-			if(newimage){
-				retstack.addSlice("",fb.tobinary(objects,true));
+			if(border) objects=fb.get_circ(objects,bordrad,bordgap);
+			if(newimage || outindexed){
+				if(!outindexed) retstack.addSlice("",fb.tobinary(objects,true));
+				else retstack.addSlice("",objects);
 			} else {
 				stack.setPixels(fb.tobinary(objects,true),i+1);
 				//data=fb.tobinary(objects,true);
 			}
 		}
-		if(newimage){
+		if(newimage || outindexed){
 			new ImagePlus(imp.getTitle()+" filtered",retstack).show();
 		} else {
 			imp.setStack(null,stack);

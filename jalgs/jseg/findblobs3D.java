@@ -650,6 +650,69 @@ public class findblobs3D{
 		return lims;
 	}
 	
+	public Object[] projectObjects(float[][] objects,int method,boolean keep3D){
+		//here we find the z projection for each object (0 is largest, 1 is sum) and place it in a 3D space
+		//if keep3D is false, we place it in the first slice
+		//need to get a z area profile for each object
+		int[][] zprof=new int[nobjects][depth];
+		for(int i=0;i<depth;i++) {
+			for(int j=0;j<height;j++) {
+				for(int k=0;k<width;k++) {
+					int id=(int)objects[i][k+j*width];
+					if(id>0 && id<=nobjects) {
+						zprof[id-1][i]++;
+					}
+				}
+			}
+		}
+		//now find either the average z position or the maximum z position
+		float[] zposstats=new float[nobjects];
+		float[] areas=new float[nobjects];
+		for(int i=0;i<nobjects;i++) {
+			areas[i]=jstatistics.getstatistic("Sum",zprof[i],null);
+			if(method==0) zposstats[i]=jstatistics.getstatistic("MaxPos",zprof[i],null);
+			if(method==1) zposstats[i]=jstatistics.getstatistic("AvgPos",zprof[i],null);
+		}
+		float[][] newobj=null;
+		if(keep3D) newobj=new float[depth][width*height];
+		else newobj=new float[1][width*height];
+		int[][] filllims=getallfilllimits(objects);
+		for(int i=0;i<nobjects;i++) {
+			if(areas[i]>0) {
+				if(method==0) {
+					//copy the largest slice to the new image
+					int bestslice=(int)zposstats[i];
+					if(bestslice<0) bestslice=0; if(bestslice>=depth) bestslice=(depth-1);
+					for(int j=filllims[i][2];j<=filllims[i][3];j++) {
+						for(int k=filllims[i][0];k<=filllims[i][1];k++) {
+							int id=(int)objects[bestslice][k+j*width];
+							if(id==(i+1)) {
+								if(keep3D) newobj[bestslice][k+j*width]=(float)id;
+								else newobj[0][k+j*width]=(float)id;
+							}
+						}
+					}
+				} else {
+					//project the object onto its best slice
+					int bestslice=Math.round(zposstats[i]);
+					if(bestslice<0) bestslice=0; if(bestslice>=depth) bestslice=(depth-1);
+					for(int l=filllims[i][4];l<=filllims[i][5];l++) {
+    					for(int j=filllims[i][2];j<=filllims[i][3];j++) {
+    						for(int k=filllims[i][0];k<=filllims[i][1];k++) {
+    							int id=(int)objects[l][k+j*width];
+    							if(id==(i+1)) {
+    								if(keep3D) newobj[bestslice][k+j*width]=(float)id;
+    								else newobj[0][k+j*width]=(float)id;
+    							}
+    						}
+    					}
+					}
+				}
+			}
+		}
+		return new Object[] {newobj,zposstats};
+	}
+	
 	/********************************************************
 	 * gets all of of the object stats
 	 * @param objects
@@ -702,6 +765,63 @@ public class findblobs3D{
     			}
 			}
 			stats[i]=jstatistics.getstatistic(stat,temp,null);
+			if(gui!=null) gui.showProgress(i,nobjects);
+		}
+		return stats;
+	}
+	
+	/********************************************************
+	 * gets all of of the object stats from multiple channels
+	 * @param objects
+	 * @param measurement: the intensity image to measure
+	 * @param lims
+	 * @param stat
+	 * @return
+	 */
+	public float[][] get_all_object_stats(float[][] objects,Object[][] measurement,int[][] lims,String stat){
+		float[][] stats=new float[measurement.length][nobjects];
+		int[] areas=get_areas(objects);
+		for(int i=0;i<nobjects;i++){
+			float[][] temp=new float[measurement.length][areas[i]];
+			int counter=0;
+			if(measurement[0][0] instanceof float[]){
+    			for(int j=lims[i][4];j<=lims[i][5];j++){
+    				for(int k=lims[i][2];k<=lims[i][3];k++){
+    					for(int l=lims[i][0];l<=lims[i][1];l++){
+    						int xyindex=l+k*width;
+    						if((int)objects[j][xyindex]==(i+1)){
+    							for(int m=0;m<measurement.length;m++) temp[m][counter]=((float[])measurement[m][j])[xyindex];
+    							counter++;
+    						}
+    					}
+    				}
+    			}
+			} else if(measurement[0][0] instanceof short[]){
+				for(int j=lims[i][4];j<=lims[i][5];j++){
+    				for(int k=lims[i][2];k<=lims[i][3];k++){
+    					for(int l=lims[i][0];l<=lims[i][1];l++){
+    						int xyindex=l+k*width;
+    						if((int)objects[j][xyindex]==(i+1)){
+    							for(int m=0;m<measurement.length;m++) temp[m][counter]=((short[])measurement[m][j])[xyindex]&0xffff;
+    							counter++;
+    						}
+    					}
+    				}
+    			}
+			} else if(measurement[0][0] instanceof byte[]){
+				for(int j=lims[i][4];j<=lims[i][5];j++){
+    				for(int k=lims[i][2];k<=lims[i][3];k++){
+    					for(int l=lims[i][0];l<=lims[i][1];l++){
+    						int xyindex=l+k*width;
+    						if((int)objects[j][xyindex]==(i+1)){
+    							for(int m=0;m<measurement.length;m++) temp[m][counter]=((byte[])measurement[m][j])[xyindex]&0xff;
+    							counter++;
+    						}
+    					}
+    				}
+    			}
+			}
+			for(int j=0;j<temp.length;j++) stats[j][i]=jstatistics.getstatistic(stat,temp[j],null);
 			if(gui!=null) gui.showProgress(i,nobjects);
 		}
 		return stats;
@@ -809,6 +929,41 @@ public class findblobs3D{
 			centroids[i][1]/=centroids[i][3];
 			centroids[i][2]/=centroids[i][3];
 			centroids[i][4]/=centroids[i][3];
+		}
+		return centroids;
+	}
+	
+	/********************
+	 * here we have multiple measurement channels
+	 * @param objects
+	 * @param measurement
+	 * @return
+	 */
+	public float[][] getCentroidsAreasAvgs(float[][] objects,Object[][] measurement){
+		int nblobs=get_nblobs(objects);
+		float[][] centroids=new float[nblobs][4+measurement.length];
+		for(int i=0;i<objects.length;i++){ //loop over z
+			float[][] tempmeas=new float[measurement.length][];
+			for(int j=0;j<measurement.length;j++) tempmeas[j]=algutils.convert_arr_float2(measurement[j][i]);
+			for(int j=0;j<height;j++){
+				for(int k=0;k<width;k++){
+					int index=(int)objects[i][k+j*width];
+					if(index>0){
+						centroids[index-1][0]+=k;
+						centroids[index-1][1]+=j;
+						centroids[index-1][2]+=i;
+						centroids[index-1][3]+=1.0f;
+						for(int l=0;l<measurement.length;l++) centroids[index-1][4+l]+=tempmeas[l][k+j*width];
+					}
+				}
+				if(gui!=null) gui.showProgress(j+i*height,depth*height);
+			}
+		}
+		for(int i=0;i<nblobs;i++){
+			centroids[i][0]/=centroids[i][3];
+			centroids[i][1]/=centroids[i][3];
+			centroids[i][2]/=centroids[i][3];
+			for(int l=0;l<measurement.length;l++) centroids[i][4+l]/=centroids[i][3];
 		}
 		return centroids;
 	}

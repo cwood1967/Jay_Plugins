@@ -396,18 +396,22 @@ public class linleastsquares{
 	}
 
 	public double[] get_amp_offset(double[] function,float[] data,boolean offset){
+		return get_amp_offset(function,data,offset,0,data.length-1);
+	}
+	
+	public double[] get_amp_offset(double[] function,float[] data,boolean offset,int start,int end) {
 		double sumx2=0.0;
 		double sumx=0.0;
 		double sumy=0.0;
 		double sumxy=0.0;
-		for(int i=0;i<data.length;i++){
+		for(int i=start;i<=end;i++){
 			sumx2+=function[i]*function[i];
 			sumx+=function[i];
 			sumy+=data[i];
 			sumxy+=data[i]*function[i];
 		}
 		if(offset){
-			double dlength=data.length;
+			double dlength=end-start+1;
 			double off,amp;
 			if(sumx2>0.0){
 				double divider=dlength*sumx2-sumx*sumx;
@@ -429,6 +433,61 @@ public class linleastsquares{
 			double[] fitparams={amp};
 			return fitparams;
 		}
+	}
+	
+	/****************
+	 * this is like loess smooth except with a user defined function--find the amp and offset at windowsize around each point
+	 * @param function: the function
+	 * @param data
+	 * @param offset
+	 * @param windowsize
+	 * @return an array of coefficients (first one or two places) and the fit
+	 */
+	public double[][] get_running_amp_offset(double[] function,float[] data,boolean offset,int windowsize){
+		int halfwsize=windowsize/2;
+		double sumx2=0.0,sumxy=0.0,sumx=0.0,sumy=0.0;
+		double[][] profile=new double[data.length][];
+		for(int j=0;j<windowsize;j++) {
+			sumx2+=function[j]*function[j];
+			sumx+=function[j];
+			sumy+=data[j];
+			sumxy+=data[j]*function[j];
+		}
+		for(int i=halfwsize;i<(data.length-halfwsize);i++) {
+			if(i>halfwsize) {
+				int prev=i-halfwsize-1;
+				int next=i-halfwsize+windowsize-1;
+				sumx2-=function[prev]*function[prev]; sumx2+=function[next]*function[next];
+				sumx-=function[prev]; sumx+=function[next];
+				sumy-=data[prev]; sumy+=data[next];
+				sumxy-=data[prev]*function[prev]; sumxy+=data[next]*function[next];
+			}
+			if(offset){
+				double dlength=windowsize;
+				double off,amp;
+				if(sumx2>0.0){
+					double divider=dlength*sumx2-sumx*sumx;
+					off=(sumx2*sumy-sumx*sumxy)/divider;
+					amp=(dlength*sumxy-sumx*sumy)/divider;
+				}else{
+					amp=0.0;
+					off=sumy/dlength;
+				}
+				profile[i]=new double[]{amp,off,amp*function[i]+off};
+			}else{
+				double amp;
+				if(sumx2>0.0){
+					amp=sumxy/sumx2;
+				}else{
+					amp=0.0;
+				}
+				profile[i]=new double[]{amp,amp*function[i]};
+			}
+		}
+		//now fill in the start and end with nearest values
+		for(int i=0;i<halfwsize;i++) profile[i]=profile[halfwsize].clone();
+		for(int i=(data.length-halfwsize);i<data.length;i++) profile[i]=profile[data.length-halfwsize-1].clone();
+		return profile;
 	}
 	
 	public double get_amp_offset_c2(double[] function,float[] data,double[] coef){

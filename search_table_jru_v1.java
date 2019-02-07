@@ -40,7 +40,7 @@ public class search_table_jru_v1 implements PlugIn {
 			gd2.showDialog(); if(gd2.wasCanceled()){return;}
 			int colindex=gd2.getNextChoiceIndex();
 			List<List<String>> table=table_tools.table2listtable(tp);
-			String[] list=(new delimit_string(' ')).getrows(input);
+			String[] list=(new delimit_string('\t')).getrows(input);
 			for(int i=0;i<list.length;i++){
 				list[i]=list[i].trim();
 				//IJ.log(""+list[i]);

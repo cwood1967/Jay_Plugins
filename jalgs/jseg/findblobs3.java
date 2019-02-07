@@ -100,6 +100,16 @@ public class findblobs3 implements Runnable{
 			}
 		}
 	}
+	
+	public void fillPolygon(byte[] mask,Polygon poly){
+		Rectangle r=poly.getBounds();
+		Rectangle r2=new Rectangle(0,0,width,height);
+		for(int j=r.y;j<(r.y+r.height);j++){
+			for(int k=r.x;k<(r.x+r.width);k++){
+				if(r2.contains(k,j) && poly.contains(k,j)) mask[k+j*width]=(byte)255;
+			}
+		}
+	}
 
 	public static byte[] threshimage(Object data,float thresh){
 		byte[] bimage=null;
@@ -1100,6 +1110,12 @@ public class findblobs3 implements Runnable{
 		}
 	}
 
+	/*****************
+	 * here we filter for area and circularity
+	 * @param objects: the indexed objects image
+	 * @param outlines: the object outlines
+	 * @param limits: minarea,maxarea,mincirc,maxcirc
+	 */
 	public void filter_area_circ(float[] objects,Polygon[] outlines,float[] limits){
 		int minarea=(int)limits[0];
 		int maxarea=(int)limits[1];
@@ -1330,10 +1346,10 @@ public class findblobs3 implements Runnable{
 	 * @param stat: the measurement statistic
 	 * @return
 	 */
-	public float[] get_all_object_stats(float[] objects,Object measurement,int[] lims,String stat){
+	public float[] get_all_object_stats(float[] objects,Object measurement,int[][] lims,String stat){
 		float[] allstats=new float[nobjects];
 		for(int i=0;i<nobjects;i++)
-			allstats[i]=get_object_stats(objects,i+1,measurement,lims,stat);
+			allstats[i]=get_object_stats(objects,i+1,measurement,lims[i],stat);
 		return allstats;
 	}
 
@@ -1445,15 +1461,17 @@ public class findblobs3 implements Runnable{
 	}
 
 	public Polygon[] get_object_outlines(float[] objects){
-		int[][] coords=get_objects_coords(objects);
+		int[][] coords=get_objects_coords(objects); //note this renumbers the objects
 		return get_object_outlines(objects,coords);
 	}
 
 	public Polygon[] get_object_outlines(float[] objects,int[][] coords){
 		Polygon[] outlines=new Polygon[coords.length];
 		for(int i=0;i<coords.length;i++){
-			int[][] outline=traceEdge(coords[i][0],coords[i][1],objects);
-			outlines[i]=new Polygon(outline[0],outline[1],outline[0].length);
+			if(coords[i]!=null) {
+				int[][] outline=traceEdge(coords[i][0],coords[i][1],objects);
+				outlines[i]=new Polygon(outline[0],outline[1],outline[0].length);
+			}
 		}
 		return outlines;
 	}
@@ -1639,7 +1657,11 @@ public class findblobs3 implements Runnable{
 		// the algorithm came from the orignal BinaryProcessor ImageJ class
 		int pass=0;
 		int pixelsRemoved;
-		clear_edges(image);
+		//need to eliminate edge pixels, clearing edge objects can be too dramatic
+		//clear_edges(image);
+		//try just clearing the edge pixels
+		for(int i=0;i<width;i++){image[i]=0.0f; image[i+(height-1)*width]=0.0f;}
+		for(int i=0;i<height;i++){image[width*i]=0.0f; image[width*i+width-1]=0.0f;}
 		do{
 			pixelsRemoved=thin(pass++,table,image);
 			pixelsRemoved=thin(pass++,table,image);
